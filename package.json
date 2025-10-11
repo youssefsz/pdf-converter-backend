@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "start:prod": "NODE_ENV=production node dist/server.js",
     "clean": "rimraf dist",
-    "prebuild": "pnpm run clean",
+    "prebuild": "npm run clean",
     "typecheck": "tsc --noEmit",
     "lint": "echo \"Lint not configured yet\"",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -23,10 +23,8 @@
   "author": "Youssef Dhibi",
   "license": "ISC",
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=18.0.0"
   },
-  "packageManager": "pnpm@10.18.2",
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",
     "archiver": "^7.0.1",
