@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Image Converter - Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .server-config {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .server-config label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .server-config input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .server-config input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .upload-area {
+            border: 3px dashed #d0d0d0;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e8edff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 13px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            color: #2e7d32;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .format-selection {
+            margin-bottom: 25px;
+        }
+
+        .format-selection label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .format-options {
+            display: flex;
+            gap: 15px;
+        }
+
+        .format-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .format-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .format-option label {
+            display: block;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .format-option input[type="radio"]:checked + label {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .format-option label:hover {
+            border-color: #667eea;
+        }
+
+        .convert-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .convert-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .convert-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .progress.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .result {
+            display: none;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.success {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+
+        .result.error {
+            background: #ffebee;
+            border: 2px solid #f44336;
+        }
+
+        .result-icon {
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .result-text {
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .result.success .result-text {
+            color: #2e7d32;
+        }
+
+        .result.error .result-text {
+            color: #c62828;
+        }
+
+        .result-message {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: #666;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .reset-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .info-box h3 {
+            color: #e65100;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .info-box ul {
+            color: #666;
+            font-size: 13px;
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 PDF Processing Service</h1>
+        <p class="subtitle">Convert PDFs to images or extract text and images</p>
+        
+        <!-- Tab Navigation -->
+        <div class="tabs" style="display: flex; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
+            <button class="tab-btn active" data-tab="convert" style="flex: 1; padding: 12px; background: none; border: none; border-bottom: 3px solid #667eea; cursor: pointer; font-weight: 600; color: #667eea;">
+                🖼️ Convert to Images
+            </button>
+            <button class="tab-btn" data-tab="extract" style="flex: 1; padding: 12px; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; color: #999;">
+                📝 Extract Content
+            </button>
+        </div>
+
+        <div class="server-config">
+            <label for="serverUrl">Server URL:</label>
+            <input type="text" id="serverUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
+        </div>
+
+        <!-- Convert Tab Content -->
+        <div class="tab-content active" id="convertTab">
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="upload-hint">PDF files only (max 10MB)</div>
+            <input type="file" id="fileInput" accept="application/pdf">
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div>Selected file:</div>
+            <div class="file-name" id="fileName"></div>
+        </div>
+
+        <div class="format-selection">
+            <label>Output Format:</label>
+            <div class="format-options">
+                <div class="format-option">
+                    <input type="radio" id="formatPng" name="format" value="png" checked>
+                    <label for="formatPng">
+                        🖼️ PNG<br>
+                        <small style="font-size: 12px; opacity: 0.8;">Lossless</small>
+                    </label>
+                </div>
+                <div class="format-option">
+                    <input type="radio" id="formatJpeg" name="format" value="jpeg">
+                    <label for="formatJpeg">
+                        📷 JPEG<br>
+                        <small style="font-size: 12px; opacity: 0.8;">Smaller size</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <button class="convert-btn" id="convertBtn" disabled>Select a PDF file first</button>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-text">Converting your PDF...</div>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-text" id="resultText"></div>
+            <div class="result-message" id="resultMessage"></div>
+            <button class="download-btn" id="downloadBtn" style="display: none;">⬇️ Download ZIP File</button>
+            <button class="reset-btn" id="resetBtn">Upload Another PDF</button>
+        </div>
+
+        <div class="info-box">
+            <h3>ℹ️ Information</h3>
+            <ul>
+                <li>Maximum file size: 10MB</li>
+                <li>All pages will be converted</li>
+                <li>PNG format: Best quality, larger file size</li>
+                <li>JPEG format: Good quality, smaller file size</li>
+                <li>Output: ZIP file containing all pages</li>
+            </ul>
+        </div>
+        </div>
+        <!-- End Convert Tab -->
+
+        <!-- Extract Tab Content -->
+        <div class="tab-content" id="extractTab" style="display: none;">
+        <div class="upload-area" id="uploadAreaExtract">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="upload-hint">PDF files only (max 10MB)</div>
+            <input type="file" id="fileInputExtract" accept="application/pdf">
+        </div>
+
+        <div class="file-info" id="fileInfoExtract">
+            <div>Selected file:</div>
+            <div class="file-name" id="fileNameExtract"></div>
+        </div>
+
+        <button class="convert-btn" id="extractBtn" disabled>Select a PDF file first</button>
+
+        <div class="progress" id="progressExtract">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-text">Extracting content from your PDF...</div>
+        </div>
+
+        <div class="result" id="resultExtract">
+            <div class="result-icon" id="resultIconExtract"></div>
+            <div class="result-text" id="resultTextExtract"></div>
+            <div class="result-message" id="resultMessageExtract"></div>
+            <button class="download-btn" id="downloadBtnExtract" style="display: none;">⬇️ Download ZIP File</button>
+            <button class="reset-btn" id="resetBtnExtract">Upload Another PDF</button>
+        </div>
+
+        <div class="info-box">
+            <h3>ℹ️ Information</h3>
+            <ul>
+                <li>Maximum file size: 10MB</li>
+                <li>Extracts text from all pages</li>
+                <li>Extracts all embedded images</li>
+                <li>Output: ZIP file with page-{N}.txt and page-{N}-images/ folders</li>
+                <li>Images are saved in their original format when possible</li>
+            </ul>
+        </div>
+        </div>
+        <!-- End Extract Tab -->
+    </div>
+
+    <script>
+        // Convert tab elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const convertBtn = document.getElementById('convertBtn');
+        const progress = document.getElementById('progress');
+        const result = document.getElementById('result');
+        const resultIcon = document.getElementById('resultIcon');
+        const resultText = document.getElementById('resultText');
+        const resultMessage = document.getElementById('resultMessage');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        // Extract tab elements
+        const uploadAreaExtract = document.getElementById('uploadAreaExtract');
+        const fileInputExtract = document.getElementById('fileInputExtract');
+        const fileInfoExtract = document.getElementById('fileInfoExtract');
+        const fileNameExtract = document.getElementById('fileNameExtract');
+        const extractBtn = document.getElementById('extractBtn');
+        const progressExtract = document.getElementById('progressExtract');
+        const resultExtract = document.getElementById('resultExtract');
+        const resultIconExtract = document.getElementById('resultIconExtract');
+        const resultTextExtract = document.getElementById('resultTextExtract');
+        const resultMessageExtract = document.getElementById('resultMessageExtract');
+        const downloadBtnExtract = document.getElementById('downloadBtnExtract');
+        const resetBtnExtract = document.getElementById('resetBtnExtract');
+        
+        const serverUrl = document.getElementById('serverUrl');
+
+        let selectedFile = null;
+        let downloadBlob = null;
+        let selectedFileExtract = null;
+        let downloadBlobExtract = null;
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                
+                // Update tab buttons
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.style.borderBottomColor = 'transparent';
+                    b.style.color = '#999';
+                });
+                btn.classList.add('active');
+                btn.style.borderBottomColor = '#667eea';
+                btn.style.color = '#667eea';
+                
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(tabName + 'Tab').style.display = 'block';
+            });
+        });
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'application/pdf') {
+                handleFile(file);
+            } else {
+                alert('Please drop a PDF file');
+            }
+        });
+
+        // Handle file selection
+        function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileInfo.classList.add('show');
+            convertBtn.disabled = false;
+            convertBtn.textContent = 'Convert to Images';
+            result.classList.remove('show');
+        }
+
+        // Convert button click
+        convertBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const format = document.querySelector('input[name="format"]:checked').value;
+            const apiUrl = serverUrl.value.trim();
+
+            // Validate server URL
+            if (!apiUrl) {
+                showError('Please enter a server URL');
+                return;
+            }
+
+            // Show progress
+            convertBtn.disabled = true;
+            progress.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                // Create form data
+                const formData = new FormData();
+                formData.append('pdf', selectedFile);
+
+                // Make API request
+                const response = await fetch(`${apiUrl}/api/pdf/convert?format=${format}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.message || `Server error: ${response.status}`);
+                }
+
+                // Get the blob
+                downloadBlob = await response.blob();
+
+                // Show success
+                showSuccess(selectedFile.name, format);
+
+            } catch (error) {
+                console.error('Conversion error:', error);
+                showError(error.message || 'Failed to convert PDF. Please check your server connection.');
+            } finally {
+                progress.classList.remove('show');
+                convertBtn.disabled = false;
+            }
+        });
+
+        // Download button click
+        downloadBtn.addEventListener('click', () => {
+            if (downloadBlob) {
+                const url = URL.createObjectURL(downloadBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = selectedFile.name.replace('.pdf', '_converted.zip');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Reset button click
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            downloadBlob = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            result.classList.remove('show');
+            convertBtn.disabled = true;
+            convertBtn.textContent = 'Select a PDF file first';
+            uploadArea.querySelector('.upload-icon').textContent = '📁';
+        });
+
+        // Show success message
+        function showSuccess(originalName, format) {
+            result.className = 'result show success';
+            resultIcon.textContent = '✅';
+            resultText.textContent = 'Conversion Successful!';
+            resultMessage.textContent = `Your PDF has been converted to ${format.toUpperCase()} format. Click below to download the ZIP file.`;
+            downloadBtn.style.display = 'block';
+        }
+
+        // Show error message
+        function showError(message) {
+            result.className = 'result show error';
+            resultIcon.textContent = '❌';
+            resultText.textContent = 'Conversion Failed';
+            resultMessage.textContent = message;
+            downloadBtn.style.display = 'none';
+        }
+
+        // =============== EXTRACT TAB HANDLERS ===============
+        
+        // Click to upload for extract
+        uploadAreaExtract.addEventListener('click', () => {
+            fileInputExtract.click();
+        });
+
+        // File selection for extract
+        fileInputExtract.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileExtract(file);
+            }
+        });
+
+        // Drag and drop for extract
+        uploadAreaExtract.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadAreaExtract.classList.add('dragover');
+        });
+
+        uploadAreaExtract.addEventListener('dragleave', () => {
+            uploadAreaExtract.classList.remove('dragover');
+        });
+
+        uploadAreaExtract.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadAreaExtract.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'application/pdf') {
+                handleFileExtract(file);
+            } else {
+                alert('Please drop a PDF file');
+            }
+        });
+
+        // Handle file selection for extract
+        function handleFileExtract(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit');
+                return;
+            }
+
+            selectedFileExtract = file;
+            fileNameExtract.textContent = file.name;
+            fileInfoExtract.classList.add('show');
+            extractBtn.disabled = false;
+            extractBtn.textContent = 'Extract Content';
+            resultExtract.classList.remove('show');
+        }
+
+        // Extract button click
+        extractBtn.addEventListener('click', async () => {
+            if (!selectedFileExtract) return;
+
+            const apiUrl = serverUrl.value.trim();
+
+            // Validate server URL
+            if (!apiUrl) {
+                showErrorExtract('Please enter a server URL');
+                return;
+            }
+
+            // Show progress
+            extractBtn.disabled = true;
+            progressExtract.classList.add('show');
+            resultExtract.classList.remove('show');
+
+            try {
+                // Create form data
+                const formData = new FormData();
+                formData.append('pdf', selectedFileExtract);
+
+                // Make API request
+                const response = await fetch(`${apiUrl}/api/pdf/extract`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.message || `Server error: ${response.status}`);
+                }
+
+                // Get the blob
+                downloadBlobExtract = await response.blob();
+
+                // Show success
+                showSuccessExtract(selectedFileExtract.name);
+
+            } catch (error) {
+                console.error('Extraction error:', error);
+                showErrorExtract(error.message || 'Failed to extract content. Please check your server connection.');
+            } finally {
+                progressExtract.classList.remove('show');
+                extractBtn.disabled = false;
+            }
+        });
+
+        // Download button click for extract
+        downloadBtnExtract.addEventListener('click', () => {
+            if (downloadBlobExtract) {
+                const url = URL.createObjectURL(downloadBlobExtract);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = selectedFileExtract.name.replace('.pdf', '_extracted.zip');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Reset button click for extract
+        resetBtnExtract.addEventListener('click', () => {
+            selectedFileExtract = null;
+            downloadBlobExtract = null;
+            fileInputExtract.value = '';
+            fileInfoExtract.classList.remove('show');
+            resultExtract.classList.remove('show');
+            extractBtn.disabled = true;
+            extractBtn.textContent = 'Select a PDF file first';
+            uploadAreaExtract.querySelector('.upload-icon').textContent = '📁';
+        });
+
+        // Show success message for extract
+        function showSuccessExtract(originalName) {
+            resultExtract.className = 'result show success';
+            resultIconExtract.textContent = '✅';
+            resultTextExtract.textContent = 'Extraction Successful!';
+            resultMessageExtract.textContent = 'Text and images have been extracted from your PDF. Click below to download the ZIP file.';
+            downloadBtnExtract.style.display = 'block';
+        }
+
+        // Show error message for extract
+        function showErrorExtract(message) {
+            resultExtract.className = 'result show error';
+            resultIconExtract.textContent = '❌';
+            resultTextExtract.textContent = 'Extraction Failed';
+            resultMessageExtract.textContent = message;
+            downloadBtnExtract.style.display = 'none';
+        }
+
+        // Test server connection on load
+        window.addEventListener('load', async () => {
+            const apiUrl = serverUrl.value.trim();
+            try {
+                const response = await fetch(`${apiUrl}/api/pdf/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Server connection successful');
+                    console.log('Available endpoints:', data.endpoints);
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not connect to server. Make sure the server is running.');
+            }
+        });
+    </script>
+</body>
+</html>
+

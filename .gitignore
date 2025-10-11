@@ -1,0 +1,92 @@
+# ============================================
+# DEPENDENCIES
+# ============================================
+node_modules/
+.pnpm-store/
+
+# ============================================
+# ENVIRONMENT VARIABLES
+# ============================================
+.env
+.env.local
+.env.*.local
+
+# ============================================
+# BUILD OUTPUT
+# ============================================
+dist/
+build/
+*.tsbuildinfo
+
+# ============================================
+# LOGS
+# ============================================
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================
+# OPERATING SYSTEM
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ============================================
+# IDE / EDITOR
+# ============================================
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# TESTING
+# ============================================
+coverage/
+.nyc_output/
+*.lcov
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ============================================
+# MISC
+# ============================================
+.cache/
+.parcel-cache/
+
