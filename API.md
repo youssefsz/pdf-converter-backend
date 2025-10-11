@@ -732,7 +732,7 @@ REACT_APP_API_URL=https://your-api-domain.com/api
 
 ---
 
-## 📞 Support
+## Support
 
 For issues or questions, refer to the main `README.md` or contact the development team.
 
