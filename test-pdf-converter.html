@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF to Image Converter - Test Interface</title>
+    <title>PDF Processing Service - Test Interface</title>
     <style>
         * {
             margin: 0;
@@ -12,8 +12,8 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -23,18 +23,20 @@
 
         .container {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid #e0e0e0;
             padding: 40px;
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
-            color: #333;
+            color: #000;
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 28px;
+            margin-bottom: 8px;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
         }
 
         .subtitle {
@@ -42,72 +44,79 @@
             color: #666;
             margin-bottom: 30px;
             font-size: 14px;
+            font-weight: 400;
         }
 
         .server-config {
-            background: #f8f9fa;
+            background: #fafafa;
             padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 25px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 30px;
         }
 
         .server-config label {
             display: block;
-            color: #555;
-            font-weight: 600;
+            color: #333;
+            font-weight: 500;
             margin-bottom: 8px;
-            font-size: 14px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .server-config input {
             width: 100%;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
             font-size: 14px;
-            transition: border-color 0.3s;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.2s;
         }
 
         .server-config input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #000;
         }
 
         .upload-area {
-            border: 3px dashed #d0d0d0;
-            border-radius: 15px;
-            padding: 40px;
+            border: 2px dashed #ccc;
+            padding: 50px 40px;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             background: #fafafa;
         }
 
         .upload-area:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
+            border-color: #666;
+            background: #f0f0f0;
         }
 
         .upload-area.dragover {
-            border-color: #667eea;
-            background: #e8edff;
+            border-color: #000;
+            background: #e8e8e8;
         }
 
         .upload-icon {
-            font-size: 48px;
+            font-size: 16px;
             margin-bottom: 15px;
+            color: #666;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .upload-text {
-            color: #666;
-            font-size: 16px;
+            color: #333;
+            font-size: 15px;
             margin-bottom: 8px;
+            font-weight: 500;
         }
 
         .upload-hint {
             color: #999;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         #fileInput {
@@ -115,9 +124,9 @@
         }
 
         .file-info {
-            background: #e8f5e9;
+            background: #f5f5f5;
             padding: 15px;
-            border-radius: 10px;
+            border: 1px solid #e0e0e0;
             margin-bottom: 20px;
             display: none;
         }
@@ -127,21 +136,24 @@
         }
 
         .file-name {
-            color: #2e7d32;
-            font-weight: 600;
+            color: #000;
+            font-weight: 500;
             word-break: break-all;
+            font-size: 14px;
         }
 
         .format-selection {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
         .format-selection label {
             display: block;
-            color: #555;
-            font-weight: 600;
-            margin-bottom: 12px;
-            font-size: 15px;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 15px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .format-options {
@@ -161,43 +173,43 @@
 
         .format-option label {
             display: block;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            padding: 18px;
+            border: 2px solid #ccc;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             font-weight: 500;
-            color: #666;
+            color: #333;
+            background: white;
         }
 
         .format-option input[type="radio"]:checked + label {
-            border-color: #667eea;
-            background: #667eea;
+            border-color: #000;
+            background: #000;
             color: white;
         }
 
         .format-option label:hover {
-            border-color: #667eea;
+            border-color: #666;
         }
 
         .convert-btn {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000;
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: background 0.2s;
             margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .convert-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            background: #333;
         }
 
         .convert-btn:disabled {
@@ -216,37 +228,35 @@
 
         .progress-bar {
             width: 100%;
-            height: 8px;
+            height: 4px;
             background: #e0e0e0;
-            border-radius: 10px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s;
-            animation: pulse 1.5s ease-in-out infinite;
+            background: #000;
+            width: 100%;
+            animation: loading 1.5s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        @keyframes loading {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
         }
 
         .progress-text {
             text-align: center;
-            margin-top: 10px;
-            color: #667eea;
-            font-weight: 600;
-            font-size: 14px;
+            margin-top: 12px;
+            color: #333;
+            font-weight: 500;
+            font-size: 13px;
         }
 
         .result {
             display: none;
             padding: 20px;
-            border-radius: 10px;
+            border: 2px solid;
             margin-top: 20px;
         }
 
@@ -255,33 +265,37 @@
         }
 
         .result.success {
-            background: #e8f5e9;
-            border: 2px solid #4caf50;
+            background: #fafafa;
+            border-color: #000;
         }
 
         .result.error {
-            background: #ffebee;
-            border: 2px solid #f44336;
+            background: #fafafa;
+            border-color: #666;
         }
 
         .result-icon {
-            font-size: 32px;
+            font-size: 14px;
             text-align: center;
             margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .result-text {
             text-align: center;
             font-weight: 600;
             margin-bottom: 15px;
+            font-size: 16px;
         }
 
         .result.success .result-text {
-            color: #2e7d32;
+            color: #000;
         }
 
         .result.error .result-text {
-            color: #c62828;
+            color: #333;
         }
 
         .result-message {
@@ -289,81 +303,87 @@
             color: #666;
             font-size: 14px;
             margin-bottom: 15px;
+            line-height: 1.5;
         }
 
         .download-btn {
             width: 100%;
-            padding: 12px;
-            background: #4caf50;
+            padding: 14px;
+            background: #000;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .download-btn:hover {
-            background: #45a049;
+            background: #333;
         }
 
         .reset-btn {
             width: 100%;
-            padding: 12px;
-            background: transparent;
-            color: #666;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 14px;
+            background: white;
+            color: #333;
+            border: 2px solid #ccc;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
             margin-top: 10px;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .reset-btn:hover {
-            border-color: #667eea;
-            color: #667eea;
+            border-color: #000;
+            color: #000;
         }
 
         .info-box {
-            background: #fff3e0;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border-left: 4px solid #ff9800;
+            background: #fafafa;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 3px solid #000;
         }
 
         .info-box h3 {
-            color: #e65100;
-            font-size: 14px;
-            margin-bottom: 8px;
+            color: #000;
+            font-size: 13px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .info-box ul {
             color: #666;
             font-size: 13px;
             margin-left: 20px;
+            line-height: 1.8;
         }
 
         .info-box li {
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📄 PDF Processing Service</h1>
+        <h1>PDF Processing Service</h1>
         <p class="subtitle">Convert PDFs to images or extract text and images</p>
         
         <!-- Tab Navigation -->
-        <div class="tabs" style="display: flex; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
-            <button class="tab-btn active" data-tab="convert" style="flex: 1; padding: 12px; background: none; border: none; border-bottom: 3px solid #667eea; cursor: pointer; font-weight: 600; color: #667eea;">
-                🖼️ Convert to Images
+        <div class="tabs" style="display: flex; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0;">
+            <button class="tab-btn active" data-tab="convert" style="flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid #000; cursor: pointer; font-weight: 600; color: #000; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Convert to Images
             </button>
-            <button class="tab-btn" data-tab="extract" style="flex: 1; padding: 12px; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; color: #999;">
-                📝 Extract Content
+            <button class="tab-btn" data-tab="extract" style="flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 500; color: #999; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Extract Content
             </button>
         </div>
 
@@ -375,14 +395,14 @@
         <!-- Convert Tab Content -->
         <div class="tab-content active" id="convertTab">
         <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📁</div>
+            <div class="upload-icon">UPLOAD FILE</div>
             <div class="upload-text">Click to upload or drag and drop</div>
             <div class="upload-hint">PDF files only (max 10MB)</div>
             <input type="file" id="fileInput" accept="application/pdf">
         </div>
 
         <div class="file-info" id="fileInfo">
-            <div>Selected file:</div>
+            <div style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Selected file:</div>
             <div class="file-name" id="fileName"></div>
         </div>
 
@@ -392,15 +412,15 @@
                 <div class="format-option">
                     <input type="radio" id="formatPng" name="format" value="png" checked>
                     <label for="formatPng">
-                        🖼️ PNG<br>
-                        <small style="font-size: 12px; opacity: 0.8;">Lossless</small>
+                        PNG<br>
+                        <small style="font-size: 11px; opacity: 0.7;">Lossless quality</small>
                     </label>
                 </div>
                 <div class="format-option">
                     <input type="radio" id="formatJpeg" name="format" value="jpeg">
                     <label for="formatJpeg">
-                        📷 JPEG<br>
-                        <small style="font-size: 12px; opacity: 0.8;">Smaller size</small>
+                        JPEG<br>
+                        <small style="font-size: 11px; opacity: 0.7;">Smaller file size</small>
                     </label>
                 </div>
             </div>
@@ -419,12 +439,12 @@
             <div class="result-icon" id="resultIcon"></div>
             <div class="result-text" id="resultText"></div>
             <div class="result-message" id="resultMessage"></div>
-            <button class="download-btn" id="downloadBtn" style="display: none;">⬇️ Download ZIP File</button>
+            <button class="download-btn" id="downloadBtn" style="display: none;">Download ZIP File</button>
             <button class="reset-btn" id="resetBtn">Upload Another PDF</button>
         </div>
 
         <div class="info-box">
-            <h3>ℹ️ Information</h3>
+            <h3>Information</h3>
             <ul>
                 <li>Maximum file size: 10MB</li>
                 <li>All pages will be converted</li>
@@ -439,14 +459,14 @@
         <!-- Extract Tab Content -->
         <div class="tab-content" id="extractTab" style="display: none;">
         <div class="upload-area" id="uploadAreaExtract">
-            <div class="upload-icon">📁</div>
+            <div class="upload-icon">UPLOAD FILE</div>
             <div class="upload-text">Click to upload or drag and drop</div>
             <div class="upload-hint">PDF files only (max 10MB)</div>
             <input type="file" id="fileInputExtract" accept="application/pdf">
         </div>
 
         <div class="file-info" id="fileInfoExtract">
-            <div>Selected file:</div>
+            <div style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Selected file:</div>
             <div class="file-name" id="fileNameExtract"></div>
         </div>
 
@@ -463,12 +483,12 @@
             <div class="result-icon" id="resultIconExtract"></div>
             <div class="result-text" id="resultTextExtract"></div>
             <div class="result-message" id="resultMessageExtract"></div>
-            <button class="download-btn" id="downloadBtnExtract" style="display: none;">⬇️ Download ZIP File</button>
+            <button class="download-btn" id="downloadBtnExtract" style="display: none;">Download ZIP File</button>
             <button class="reset-btn" id="resetBtnExtract">Upload Another PDF</button>
         </div>
 
         <div class="info-box">
-            <h3>ℹ️ Information</h3>
+            <h3>Information</h3>
             <ul>
                 <li>Maximum file size: 10MB</li>
                 <li>Extracts text from all pages</li>
@@ -527,10 +547,12 @@
                     b.classList.remove('active');
                     b.style.borderBottomColor = 'transparent';
                     b.style.color = '#999';
+                    b.style.fontWeight = '500';
                 });
                 btn.classList.add('active');
-                btn.style.borderBottomColor = '#667eea';
-                btn.style.color = '#667eea';
+                btn.style.borderBottomColor = '#000';
+                btn.style.color = '#000';
+                btn.style.fontWeight = '600';
                 
                 // Update tab content
                 document.querySelectorAll('.tab-content').forEach(content => {
@@ -667,14 +689,14 @@
             result.classList.remove('show');
             convertBtn.disabled = true;
             convertBtn.textContent = 'Select a PDF file first';
-            uploadArea.querySelector('.upload-icon').textContent = '📁';
+            uploadArea.querySelector('.upload-icon').textContent = 'UPLOAD FILE';
         });
 
         // Show success message
         function showSuccess(originalName, format) {
             result.className = 'result show success';
-            resultIcon.textContent = '✅';
-            resultText.textContent = 'Conversion Successful!';
+            resultIcon.textContent = 'SUCCESS';
+            resultText.textContent = 'Conversion Successful';
             resultMessage.textContent = `Your PDF has been converted to ${format.toUpperCase()} format. Click below to download the ZIP file.`;
             downloadBtn.style.display = 'block';
         }
@@ -682,7 +704,7 @@
         // Show error message
         function showError(message) {
             result.className = 'result show error';
-            resultIcon.textContent = '❌';
+            resultIcon.textContent = 'ERROR';
             resultText.textContent = 'Conversion Failed';
             resultMessage.textContent = message;
             downloadBtn.style.display = 'none';
@@ -816,14 +838,14 @@
             resultExtract.classList.remove('show');
             extractBtn.disabled = true;
             extractBtn.textContent = 'Select a PDF file first';
-            uploadAreaExtract.querySelector('.upload-icon').textContent = '📁';
+            uploadAreaExtract.querySelector('.upload-icon').textContent = 'UPLOAD FILE';
         });
 
         // Show success message for extract
         function showSuccessExtract(originalName) {
             resultExtract.className = 'result show success';
-            resultIconExtract.textContent = '✅';
-            resultTextExtract.textContent = 'Extraction Successful!';
+            resultIconExtract.textContent = 'SUCCESS';
+            resultTextExtract.textContent = 'Extraction Successful';
             resultMessageExtract.textContent = 'Text and images have been extracted from your PDF. Click below to download the ZIP file.';
             downloadBtnExtract.style.display = 'block';
         }
@@ -831,7 +853,7 @@
         // Show error message for extract
         function showErrorExtract(message) {
             resultExtract.className = 'result show error';
-            resultIconExtract.textContent = '❌';
+            resultIconExtract.textContent = 'ERROR';
             resultTextExtract.textContent = 'Extraction Failed';
             resultMessageExtract.textContent = message;
             downloadBtnExtract.style.display = 'none';
@@ -844,11 +866,11 @@
                 const response = await fetch(`${apiUrl}/api/pdf/health`);
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('✅ Server connection successful');
+                    console.log('[OK] Server connection successful');
                     console.log('Available endpoints:', data.endpoints);
                 }
             } catch (error) {
-                console.warn('⚠️ Could not connect to server. Make sure the server is running.');
+                console.warn('[WARNING] Could not connect to server. Make sure the server is running.');
             }
         });
     </script>
