@@ -1,284 +1,248 @@
 # PDF Converter API
 
-A production-ready Express.js server built with TypeScript, following best practices for security, performance, and maintainability.
+A production-ready Express.js PDF conversion API built with TypeScript. Convert PDFs to images or extract text and images from PDF documents.
 
-## 🚀 Features
+## 🛠️ Tech Stack
 
-- **TypeScript** - Full type safety and modern JavaScript features
-- **Express 5.x** - Latest version with improved performance and features
-- **PDF Conversion** - Convert PDF files to images (PNG/JPEG) with ZIP output
-- **Content Extraction** - Extract text and images from PDFs with organized structure
-- **Security First** - Helmet, CORS, rate limiting, and input validation
-- **File Upload** - Secure file handling with Multer and validation
-- **Error Handling** - Centralized error handling with async support
-- **Environment Configuration** - Type-safe environment variable management
-- **Logging** - Request logging with detailed information
-- **Production Ready** - Graceful shutdown, compression, and optimization
-- **Clean Architecture** - Modular structure for easy scaling
-- **Cloud-Friendly** - No system dependencies, perfect for Render.com deployment
+### Core Technologies
+- **Runtime:** Node.js >= 18.0.0
+- **Framework:** Express 5.1.0
+- **Language:** TypeScript 5.9.3
+- **Package Manager:** pnpm 10.18.2
 
-## 📋 Prerequisites
+### Key Libraries
+
+**PDF Processing:**
+- `pdfjs-dist` (5.4.296) - Mozilla's PDF parsing and rendering library
+- `@napi-rs/canvas` (0.1.80) - High-performance canvas implementation for Node.js
+
+**File Handling:**
+- `multer` (2.0.2) - Multipart/form-data file upload middleware
+- `archiver` (7.0.1) - ZIP file creation and streaming
+
+**Security & Performance:**
+- `helmet` (8.1.0) - Security HTTP headers
+- `express-rate-limit` (8.1.0) - Rate limiting middleware
+- `cors` (2.8.5) - Cross-Origin Resource Sharing
+- `compression` (1.8.1) - Response compression (gzip/deflate)
+
+**Configuration:**
+- `dotenv` (17.2.3) - Environment variable management
+
+## 🚀 Getting Started
+
+### Prerequisites
 
 - Node.js >= 18.0.0
 - pnpm >= 8.0.0
 
-## 🔧 Installation
+### Installation
 
+1. **Clone the repository** (if applicable)
 ```bash
-# Install dependencies
-pnpm install
+git clone <repository-url>
+cd pdf-converter
+```
 
-# Copy environment file
+2. **Install dependencies**
+```bash
+pnpm install
+```
+
+3. **Configure environment**
+```bash
 cp .env.example .env
 ```
 
-## 🎯 Usage
+Edit `.env` file as needed. Defaults work fine for development.
 
-### Development
+4. **Start the server**
 
+**Development mode** (with hot reload):
 ```bash
-# Run in development mode with hot reload
 pnpm dev
 ```
 
-### Production
-
+**Production mode:**
 ```bash
-# Build the project
 pnpm build
-
-# Run in production mode
 pnpm start:prod
 ```
 
-### Other Commands
+Server will be running at `http://localhost:3000`
+
+## 📝 Available Commands
 
 ```bash
-# Type checking
-pnpm typecheck
-
-# Clean build directory
-pnpm clean
-
-# Build without cleaning
-pnpm build
+pnpm dev          # Start development server with hot reload
+pnpm build        # Compile TypeScript to JavaScript
+pnpm start:prod   # Run production build
+pnpm typecheck    # Type check without building
+pnpm clean        # Remove build artifacts
 ```
+
+## 🔐 Environment Configuration
+
+Key environment variables in `.env`:
+
+```env
+# Server Configuration
+NODE_ENV=development          # development | production | test
+PORT=3000                     # Server port
+HOST=0.0.0.0                 # Server host (0.0.0.0 for all interfaces)
+
+# API Configuration
+API_PREFIX=/api              # API route prefix
+
+# CORS Configuration
+CORS_ORIGIN=*                # Allowed origins (* for all, or comma-separated list)
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000  # Time window in ms (15 minutes)
+RATE_LIMIT_MAX_REQUESTS=100  # Max requests per window per IP
+
+# File Upload
+MAX_FILE_SIZE=10485760       # Max upload size in bytes (10MB)
+```
+
+See `.env.example` for complete list of available configuration options.
 
 ## 📁 Project Structure
 
 ```
 pdf-converter/
 ├── src/
-│   ├── config/           # Configuration files
-│   │   ├── env.ts        # Environment variable management
-│   │   └── upload.ts     # File upload configuration
-│   ├── middleware/       # Express middleware
-│   │   ├── errorHandler.ts
-│   │   ├── logging.ts
-│   │   └── security.ts
-│   ├── routes/           # API routes
-│   │   ├── index.ts
-│   │   ├── health.routes.ts
-│   │   └── pdf.routes.ts # PDF conversion endpoints
-│   ├── services/         # Business logic
-│   │   └── pdfConverter.service.ts
-│   ├── utils/            # Utility functions
-│   │   └── asyncHandler.ts
-│   ├── app.ts            # Express app configuration
-│   └── server.ts         # Server entry point
-├── dist/                 # Compiled JavaScript (generated)
-├── .env                  # Environment variables (not in git)
-├── .env.example          # Environment variables template
-├── tsconfig.json         # TypeScript configuration
-└── package.json          # Project dependencies and scripts
-```
-
-## 🔐 Environment Variables
-
-See `.env.example` for all available configuration options.
-
-Key variables:
-- `NODE_ENV` - Environment (development/production/test)
-- `PORT` - Server port (default: 3000)
-- `HOST` - Server host (default: 0.0.0.0)
-- `API_PREFIX` - API route prefix (default: /api)
-- `CORS_ORIGIN` - Allowed CORS origins
-- `RATE_LIMIT_MAX_REQUESTS` - Max requests per window per IP
-
-## 📡 API Endpoints
-
-### Root Endpoint
-```
-GET /
-Response: { "status": "success", "message": "Youssef Dhibi", "timestamp": "..." }
-```
-
-### Health Check
-```
-GET /api/health
-Response: { "status": "success", "message": "Server is running", ... }
-```
-
-### Server Information
-```
-GET /api/health/info
-Response: { "status": "success", "data": { "name": "Youssef Dhibi", ... } }
-```
-
-### PDF Conversion
-
-#### Convert PDF to Images
-```
-POST /api/pdf/convert?format=png
-Content-Type: multipart/form-data
-Body: pdf file (max 10MB)
-
-Response: ZIP file containing all pages as images
-
-Query Parameters:
-- format: Image format (png or jpeg), default: png
-```
-
-**Example with cURL:**
-```bash
-curl -X POST "http://localhost:3000/api/pdf/convert?format=png" \
-  -F "pdf=@document.pdf" \
-  -o output.zip
-```
-
-**Example with JavaScript/Fetch:**
-```javascript
-const formData = new FormData();
-formData.append('pdf', pdfFile);
-
-const response = await fetch('http://localhost:3000/api/pdf/convert?format=png', {
-  method: 'POST',
-  body: formData
-});
-
-const blob = await response.blob();
-// Save or process the ZIP file
-```
-
-#### Extract Text and Images from PDF
-```
-POST /api/pdf/extract
-Content-Type: multipart/form-data
-Body: pdf file (max 10MB)
-
-Response: ZIP file containing:
-- page-{N}.txt: Text content for each page
-- page-{N}-images/: Folder with images from each page
-  - page-{N}-image-{idx}.{format}: Individual images
-```
-
-**Example with cURL:**
-```bash
-curl -X POST "http://localhost:3000/api/pdf/extract" \
-  -F "pdf=@document.pdf" \
-  -o extracted.zip
-```
-
-**Output Structure:**
-```
-document_extracted.zip
-├── page-1.txt
-├── page-1-images/
-│   ├── page-1-image-1.png
-│   └── page-1-image-2.jpg
-├── page-2.txt
-└── page-2-images/
-    └── page-2-image-1.png
-```
-
-#### PDF Service Health Check
-```
-GET /api/pdf/health
-Response: { 
-  "status": "success", 
-  "message": "PDF conversion service is operational",
-  "endpoints": {
-    "convert": "POST /convert - Convert PDF pages to images (png/jpeg)",
-    "extract": "POST /extract - Extract text and images from PDF"
-  },
-  "supportedFormats": ["png", "jpeg"],
-  "maxFileSize": "10MB"
-}
+│   ├── config/                    # Configuration files
+│   │   ├── env.ts                # Environment variable validation
+│   │   └── upload.ts             # File upload configuration (Multer)
+│   │
+│   ├── middleware/                # Express middleware
+│   │   ├── errorHandler.ts      # Centralized error handling
+│   │   ├── logging.ts           # Request/response logging
+│   │   └── security.ts          # Security middleware (Helmet, CORS, Rate Limiting)
+│   │
+│   ├── routes/                    # API route handlers
+│   │   ├── index.ts             # Main router
+│   │   ├── health.routes.ts     # Health check endpoints
+│   │   └── pdf.routes.ts        # PDF conversion endpoints
+│   │
+│   ├── services/                  # Business logic layer
+│   │   └── pdfConverter.service.ts  # PDF processing service
+│   │
+│   ├── utils/                     # Utility functions
+│   │   └── asyncHandler.ts      # Async error wrapper
+│   │
+│   ├── app.ts                     # Express application setup
+│   └── server.ts                  # Server entry point & lifecycle
+│
+├── dist/                          # Compiled JavaScript (generated)
+├── .env                          # Environment variables (not in git)
+├── .env.example                  # Environment template
+├── package.json                  # Dependencies and scripts
+├── tsconfig.json                 # TypeScript configuration
+└── test-pdf-converter.html       # Web testing interface
 ```
 
 ## 🛡️ Security Features
 
-- **Helmet** - Sets secure HTTP headers
-- **CORS** - Configurable cross-origin resource sharing
-- **Rate Limiting** - Prevents abuse with IP-based limits
-- **Input Validation** - JSON and URL-encoded body parsing with size limits
-- **Error Sanitization** - Production errors don't leak stack traces
+- **Helmet:** Sets secure HTTP headers (CSP, HSTS, etc.)
+- **CORS:** Configurable cross-origin resource sharing
+- **Rate Limiting:** IP-based request throttling (100 req/15min default)
+- **Input Validation:** File type and size validation
+- **Error Sanitization:** No stack traces exposed in production
+- **Memory Storage:** No temporary files written to disk
 
-## 🚦 Error Handling
+## 🎯 Features
 
-The server includes comprehensive error handling:
-- Async error wrapper for route handlers
-- Centralized error middleware
-- Custom error classes with status codes
-- Graceful shutdown on uncaught exceptions
-- Unhandled rejection handling
+### PDF to Images
+- Convert any PDF to high-quality images
+- Support for PNG and JPEG formats
+- High resolution (2x scale factor)
+- Returns ZIP archive with all pages
 
-## 📊 Logging
+### Text & Image Extraction
+- Extract text content from PDFs
+- Extract embedded images with original quality
+- Organized output structure
+- Preserves image formats (JPEG, PNG)
 
-- Request logging with method, path, duration, and status
-- Development mode includes additional verbose logging
-- Structured JSON logs for production parsing
-- Error logging with stack traces in development
+### Performance
+- In-memory processing (no disk I/O)
+- Streaming ZIP responses
+- Efficient for cloud deployments
+- Handles multi-page PDFs efficiently
 
-## 🔄 Graceful Shutdown
+## 🚀 Deployment
 
-The server handles SIGTERM and SIGINT signals gracefully:
-- Closes server connections
-- Waits for ongoing requests to complete
-- Forces shutdown after 30 seconds timeout
-- Cleans up resources properly
+This API is optimized for cloud platforms like Render.com, Railway, Vercel, and others.
 
-## 🎨 Best Practices
-
-- ✅ TypeScript strict mode enabled
-- ✅ Environment variable validation
-- ✅ Async/await error handling
-- ✅ Middleware separation of concerns
-- ✅ Clean code architecture
-- ✅ Production-ready configuration
-- ✅ Security headers and CORS
-- ✅ Request compression
-- ✅ Rate limiting
-
-## 📝 Adding New Endpoints
-
-1. Create a new route file in `src/routes/`
-2. Import and use `asyncHandler` for async routes
-3. Register the route in `src/routes/index.ts`
-4. Use the `AppError` class for throwing errors
-
-Example:
-
-```typescript
-// src/routes/users.routes.ts
-import { Router } from 'express';
-import { asyncHandler } from '../utils/asyncHandler';
-import { AppError } from '../middleware/errorHandler';
-
-export const userRouter = Router();
-
-userRouter.get('/', asyncHandler(async (req, res) => {
-  const users = await fetchUsers();
-  res.json({ status: 'success', data: users });
-}));
+### Build Command
+```bash
+pnpm install && pnpm build
 ```
 
-## 🤝 Contributing
+### Start Command
+```bash
+pnpm start:prod
+```
 
-1. Follow the existing code structure
-2. Use TypeScript strict types
-3. Handle errors properly with asyncHandler
-4. Update documentation for new features
+### Environment Setup
+- Set `NODE_ENV=production`
+- Configure `PORT` (usually provided by platform)
+- Set `CORS_ORIGIN` to your frontend domain
+- Adjust rate limits as needed
+
+### Platform Compatibility
+- ✅ **Render.com** - Fully compatible, no system dependencies
+- ✅ **Railway** - Works out of the box
+- ✅ **Heroku** - Compatible
+- ✅ **Vercel** - Compatible (serverless)
+- ✅ **AWS Lambda** - Compatible with adapter
+
+## 🧪 Testing
+
+### Web Interface
+Open `test-pdf-converter.html` in your browser for a user-friendly testing interface with:
+- Drag-and-drop file upload
+- PDF to Images conversion
+- Text & Image extraction
+- Real-time progress tracking
+
+### API Testing
+See `API.md` for complete API documentation with cURL and JavaScript examples.
+
+### Health Check
+```bash
+curl http://localhost:3000/api/health
+```
+
+## 🏗️ Architecture
+
+### Middleware Chain
+1. **Security** (Helmet, CORS, Rate Limiting)
+2. **Parsing** (JSON, URL-encoded)
+3. **Compression** (gzip/deflate)
+4. **Logging** (Request/response)
+5. **Routes** (API endpoints)
+6. **Error Handling** (404 & error middleware)
+
+### Error Handling
+- Centralized error middleware
+- Custom `AppError` class with status codes
+- Async error wrapper for all route handlers
+- Graceful shutdown on critical errors
+
+### Type Safety
+- Strict TypeScript configuration
+- Full type coverage
+- Type-safe environment variables
+- Interface-driven development
+
+## 📚 Documentation
+
+- **API.md** - Complete API reference for frontend integration
+- **.env.example** - Configuration template with descriptions
+- **Inline Comments** - Code documentation
 
 ## 📄 License
 
@@ -288,3 +252,6 @@ ISC
 
 Youssef Dhibi
 
+---
+
+**Need to integrate this API into your frontend?** Check out `API.md` for complete endpoint documentation with examples!
