@@ -119,10 +119,6 @@
             font-size: 12px;
         }
 
-        #fileInput {
-            display: none;
-        }
-
         .file-info {
             background: #f5f5f5;
             padding: 15px;
@@ -370,17 +366,87 @@
         .info-box li {
             margin-bottom: 6px;
         }
+
+        .image-preview-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 8px;
+        }
+
+        .image-preview-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border: 1px solid #e0e0e0;
+        }
+
+        .image-preview-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .image-preview-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .image-preview-page {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .image-preview-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .image-preview-actions button {
+            padding: 6px 10px;
+            background: white;
+            border: 1px solid #ccc;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .image-preview-actions button:hover {
+            border-color: #000;
+            background: #f0f0f0;
+        }
+
+        .image-preview-actions button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .image-preview-actions button:disabled:hover {
+            border-color: #ccc;
+            background: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>PDF Processing Service</h1>
-        <p class="subtitle">Convert PDFs to images or extract text and images</p>
+        <p class="subtitle">Convert PDFs to images, convert images to PDF, or extract content</p>
         
         <!-- Tab Navigation -->
         <div class="tabs" style="display: flex; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0;">
             <button class="tab-btn active" data-tab="convert" style="flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid #000; cursor: pointer; font-weight: 600; color: #000; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
-                Convert to Images
+                PDF to Images
+            </button>
+            <button class="tab-btn" data-tab="imagesToPdf" style="flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 500; color: #999; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Images to PDF
             </button>
             <button class="tab-btn" data-tab="extract" style="flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 500; color: #999; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
                 Extract Content
@@ -398,7 +464,7 @@
             <div class="upload-icon">UPLOAD FILE</div>
             <div class="upload-text">Click to upload or drag and drop</div>
             <div class="upload-hint">PDF files only (max 10MB)</div>
-            <input type="file" id="fileInput" accept="application/pdf">
+            <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
         </div>
 
         <div class="file-info" id="fileInfo">
@@ -456,13 +522,60 @@
         </div>
         <!-- End Convert Tab -->
 
+        <!-- Images to PDF Tab Content -->
+        <div class="tab-content" id="imagesToPdfTab" style="display: none;">
+        <div class="upload-area" id="uploadAreaImages">
+            <div class="upload-icon">UPLOAD IMAGES</div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="upload-hint">PNG and JPEG files (max 20 images, 10MB each)</div>
+            <input type="file" id="fileInputImages" accept="image/png,image/jpeg" multiple style="display: none;">
+        </div>
+
+        <div id="imagePreviewContainer" style="display: none; margin-bottom: 20px;">
+            <div style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; font-weight: 500;">
+                Selected Images (<span id="imageCount">0</span>):
+            </div>
+            <div id="imageList" style="max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 10px; background: #fafafa;"></div>
+        </div>
+
+        <button class="convert-btn" id="convertImagesBtn" disabled>Select at least one image</button>
+
+        <div class="progress" id="progressImages">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-text">Converting images to PDF...</div>
+        </div>
+
+        <div class="result" id="resultImages">
+            <div class="result-icon" id="resultIconImages"></div>
+            <div class="result-text" id="resultTextImages"></div>
+            <div class="result-message" id="resultMessageImages"></div>
+            <button class="download-btn" id="downloadBtnImages" style="display: none;">Download PDF File</button>
+            <button class="reset-btn" id="resetBtnImages">Upload More Images</button>
+        </div>
+
+        <div class="info-box">
+            <h3>Information</h3>
+            <ul>
+                <li>Maximum 20 images per request</li>
+                <li>Maximum file size per image: 10MB</li>
+                <li>Supported formats: PNG and JPEG</li>
+                <li>Each image becomes one page in the PDF</li>
+                <li>Use arrow buttons to reorder pages before conversion</li>
+                <li>Pages are sized to match each image's dimensions</li>
+            </ul>
+        </div>
+        </div>
+        <!-- End Images to PDF Tab -->
+
         <!-- Extract Tab Content -->
         <div class="tab-content" id="extractTab" style="display: none;">
         <div class="upload-area" id="uploadAreaExtract">
             <div class="upload-icon">UPLOAD FILE</div>
             <div class="upload-text">Click to upload or drag and drop</div>
             <div class="upload-hint">PDF files only (max 10MB)</div>
-            <input type="file" id="fileInputExtract" accept="application/pdf">
+            <input type="file" id="fileInputExtract" accept="application/pdf" style="display: none;">
         </div>
 
         <div class="file-info" id="fileInfoExtract">
@@ -857,6 +970,241 @@
             resultTextExtract.textContent = 'Extraction Failed';
             resultMessageExtract.textContent = message;
             downloadBtnExtract.style.display = 'none';
+        }
+
+        // =============== IMAGES TO PDF TAB HANDLERS ===============
+        
+        const uploadAreaImages = document.getElementById('uploadAreaImages');
+        const fileInputImages = document.getElementById('fileInputImages');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imageList = document.getElementById('imageList');
+        const imageCount = document.getElementById('imageCount');
+        const convertImagesBtn = document.getElementById('convertImagesBtn');
+        const progressImages = document.getElementById('progressImages');
+        const resultImages = document.getElementById('resultImages');
+        const resultIconImages = document.getElementById('resultIconImages');
+        const resultTextImages = document.getElementById('resultTextImages');
+        const resultMessageImages = document.getElementById('resultMessageImages');
+        const downloadBtnImages = document.getElementById('downloadBtnImages');
+        const resetBtnImages = document.getElementById('resetBtnImages');
+
+        let selectedImages = [];
+        let downloadBlobImages = null;
+
+        // Click to upload images
+        uploadAreaImages.addEventListener('click', () => {
+            fileInputImages.click();
+        });
+
+        // File selection for images
+        fileInputImages.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                handleImagesSelection(files);
+            }
+        });
+
+        // Drag and drop for images
+        uploadAreaImages.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadAreaImages.classList.add('dragover');
+        });
+
+        uploadAreaImages.addEventListener('dragleave', () => {
+            uploadAreaImages.classList.remove('dragover');
+        });
+
+        uploadAreaImages.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadAreaImages.classList.remove('dragover');
+            
+            const files = Array.from(e.dataTransfer.files);
+            handleImagesSelection(files);
+        });
+
+        // Handle images selection
+        function handleImagesSelection(files) {
+            // Filter valid image files
+            const validFiles = files.filter(file => {
+                if (!['image/png', 'image/jpeg'].includes(file.type)) {
+                    return false;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`File "${file.name}" exceeds 10MB limit`);
+                    return false;
+                }
+                return true;
+            });
+
+            if (validFiles.length === 0) {
+                alert('Please select valid PNG or JPEG images');
+                return;
+            }
+
+            if (selectedImages.length + validFiles.length > 20) {
+                alert('Maximum 20 images allowed. Only adding first ' + (20 - selectedImages.length) + ' images.');
+                validFiles.splice(20 - selectedImages.length);
+            }
+
+            // Add to selected images
+            validFiles.forEach(file => {
+                selectedImages.push({
+                    id: Date.now() + Math.random(),
+                    file: file,
+                    preview: URL.createObjectURL(file)
+                });
+            });
+
+            updateImagePreview();
+            resultImages.classList.remove('show');
+        }
+
+        // Update image preview display
+        function updateImagePreview() {
+            if (selectedImages.length === 0) {
+                imagePreviewContainer.style.display = 'none';
+                convertImagesBtn.disabled = true;
+                convertImagesBtn.textContent = 'Select at least one image';
+                return;
+            }
+
+            imagePreviewContainer.style.display = 'block';
+            imageCount.textContent = selectedImages.length;
+            convertImagesBtn.disabled = false;
+            convertImagesBtn.textContent = `Convert ${selectedImages.length} Image${selectedImages.length > 1 ? 's' : ''} to PDF`;
+
+            imageList.innerHTML = '';
+            selectedImages.forEach((img, index) => {
+                const item = document.createElement('div');
+                item.className = 'image-preview-item';
+                item.innerHTML = `
+                    <img src="${img.preview}" alt="Preview">
+                    <div class="image-preview-info">
+                        <div class="image-preview-name">${img.file.name}</div>
+                        <div class="image-preview-page">Page ${index + 1}</div>
+                    </div>
+                    <div class="image-preview-actions">
+                        <button onclick="moveImageUp(${index})" ${index === 0 ? 'disabled' : ''}>↑</button>
+                        <button onclick="moveImageDown(${index})" ${index === selectedImages.length - 1 ? 'disabled' : ''}>↓</button>
+                        <button onclick="removeImage(${index})">Remove</button>
+                    </div>
+                `;
+                imageList.appendChild(item);
+            });
+        }
+
+        // Move image up
+        window.moveImageUp = function(index) {
+            if (index > 0) {
+                [selectedImages[index], selectedImages[index - 1]] = [selectedImages[index - 1], selectedImages[index]];
+                updateImagePreview();
+            }
+        };
+
+        // Move image down
+        window.moveImageDown = function(index) {
+            if (index < selectedImages.length - 1) {
+                [selectedImages[index], selectedImages[index + 1]] = [selectedImages[index + 1], selectedImages[index]];
+                updateImagePreview();
+            }
+        };
+
+        // Remove image
+        window.removeImage = function(index) {
+            URL.revokeObjectURL(selectedImages[index].preview);
+            selectedImages.splice(index, 1);
+            updateImagePreview();
+        };
+
+        // Convert images to PDF button click
+        convertImagesBtn.addEventListener('click', async () => {
+            if (selectedImages.length === 0) return;
+
+            const apiUrl = serverUrl.value.trim();
+
+            if (!apiUrl) {
+                showErrorImages('Please enter a server URL');
+                return;
+            }
+
+            // Show progress
+            convertImagesBtn.disabled = true;
+            progressImages.classList.add('show');
+            resultImages.classList.remove('show');
+
+            try {
+                // Create form data
+                const formData = new FormData();
+                selectedImages.forEach(img => {
+                    formData.append('images', img.file);
+                });
+
+                // Make API request
+                const response = await fetch(`${apiUrl}/api/pdf/images-to-pdf`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.message || `Server error: ${response.status}`);
+                }
+
+                // Get the PDF blob
+                downloadBlobImages = await response.blob();
+
+                // Show success
+                showSuccessImages();
+
+            } catch (error) {
+                console.error('Conversion error:', error);
+                showErrorImages(error.message || 'Failed to convert images to PDF. Please check your server connection.');
+            } finally {
+                progressImages.classList.remove('show');
+                convertImagesBtn.disabled = false;
+            }
+        });
+
+        // Download button click for images to PDF
+        downloadBtnImages.addEventListener('click', () => {
+            if (downloadBlobImages) {
+                const url = URL.createObjectURL(downloadBlobImages);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'converted.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Reset button click for images to PDF
+        resetBtnImages.addEventListener('click', () => {
+            selectedImages.forEach(img => URL.revokeObjectURL(img.preview));
+            selectedImages = [];
+            downloadBlobImages = null;
+            fileInputImages.value = '';
+            updateImagePreview();
+            resultImages.classList.remove('show');
+        });
+
+        // Show success message for images to PDF
+        function showSuccessImages() {
+            resultImages.className = 'result show success';
+            resultIconImages.textContent = 'SUCCESS';
+            resultTextImages.textContent = 'Conversion Successful';
+            resultMessageImages.textContent = `Your ${selectedImages.length} image${selectedImages.length > 1 ? 's have' : ' has'} been converted to a PDF document. Click below to download.`;
+            downloadBtnImages.style.display = 'block';
+        }
+
+        // Show error message for images to PDF
+        function showErrorImages(message) {
+            resultImages.className = 'result show error';
+            resultIconImages.textContent = 'ERROR';
+            resultTextImages.textContent = 'Conversion Failed';
+            resultMessageImages.textContent = message;
+            downloadBtnImages.style.display = 'none';
         }
 
         // Test server connection on load

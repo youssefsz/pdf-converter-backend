@@ -6,8 +6,9 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import archiver from 'archiver';
-import { upload, getUploadErrorMessage } from '../config/upload';
+import { upload, imageUpload, getUploadErrorMessage } from '../config/upload';
 import { pdfConverterService, PDFConverterService, ImageFormat } from '../services/pdfConverter.service';
+import { imageToPdfService, ImageToPdfService } from '../services/imageToPdf.service';
 import { asyncHandler } from '../utils/asyncHandler';
 
 export const pdfRouter: Router = Router();
@@ -179,12 +180,74 @@ pdfRouter.post(
 );
 
 /**
+ * POST /images-to-pdf
+ * 
+ * Convert multiple images (PNG/JPEG) to a single PDF document.
+ * Each image becomes one page in the PDF, preserving original dimensions.
+ * Images are processed in upload order.
+ * 
+ * Request Body (multipart/form-data):
+ *   - images: Array of image files (PNG or JPEG)
+ *   - Max 20 images per request
+ *   - Max 10MB per image
+ * 
+ * Response:
+ *   - PDF file for download
+ */
+pdfRouter.post(
+  '/images-to-pdf',
+  imageUpload.array('images', 20),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    // Check if files were uploaded
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      res.status(400).json({
+        status: 'error',
+        message: 'No images uploaded. Please provide at least one image in the "images" field.',
+      });
+      return;
+    }
+
+    try {
+      // Prepare image data for conversion
+      const images = req.files.map(file => ({
+        buffer: file.buffer,
+        mimetype: file.mimetype,
+        originalname: file.originalname,
+      }));
+
+      // Validate images
+      ImageToPdfService.validateImages(images);
+
+      // Convert images to PDF
+      const pdfBuffer = await imageToPdfService.convertImagesToPdf(images);
+
+      // Set response headers for PDF download
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const pdfFilename = `images-to-pdf-${timestamp}.pdf`;
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${pdfFilename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+
+      // Send the PDF buffer
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      // Pass error to error handler
+      next(error);
+    }
+  })
+);
+
+/**
  * Error handler for multer errors
  * This middleware catches file upload errors
  */
 pdfRouter.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   // Check if it's a multer error
-  if (err.name === 'MulterError' || err.message === 'Only PDF files are allowed') {
+  if (err.name === 'MulterError' || 
+      err.message === 'Only PDF files are allowed' ||
+      err.message === 'Only PNG and JPEG images are allowed') {
     res.status(400).json({
       status: 'error',
       message: getUploadErrorMessage(err),
@@ -208,9 +271,14 @@ pdfRouter.get('/health', (_req: Request, res: Response) => {
     endpoints: {
       convert: 'POST /convert - Convert PDF pages to images (png/jpeg)',
       extract: 'POST /extract - Extract text and images from PDF',
+      imagesToPdf: 'POST /images-to-pdf - Convert multiple images to a single PDF',
     },
-    supportedFormats: ['png', 'jpeg'],
+    supportedFormats: {
+      pdfToImages: ['png', 'jpeg'],
+      imagesToPdf: ['png', 'jpeg'],
+    },
     maxFileSize: '10MB',
+    maxImagesPerRequest: 20,
   });
 });
 

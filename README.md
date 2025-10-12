@@ -14,6 +14,7 @@ A production-ready Express.js PDF conversion API built with TypeScript. Convert 
 
 **PDF Processing:**
 - `pdfjs-dist` (5.4.296) - Mozilla's PDF parsing and rendering library
+- `pdf-lib` (1.17.1) - PDF creation and modification library
 - `@napi-rs/canvas` (0.1.80) - High-performance canvas implementation for Node.js
 
 **File Handling:**
@@ -159,6 +160,13 @@ pdf-converter/
 - Support for PNG and JPEG formats
 - High resolution (2x scale factor)
 - Returns ZIP archive with all pages
+
+### Images to PDF
+- Convert multiple images into a single PDF document
+- Support for PNG and JPEG images
+- Each image becomes one page at its original dimensions
+- Upload order preserved (frontend can reorder before conversion)
+- Maximum 20 images per request
 
 ### Text & Image Extraction
 - Extract text content from PDFs

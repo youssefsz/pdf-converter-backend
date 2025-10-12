@@ -273,7 +273,390 @@ curl -X POST "http://localhost:3000/api/pdf/convert?format=jpeg" \
 
 ---
 
-### 4. Extract Text and Images
+### 4. Convert Images to PDF
+
+Convert multiple images (PNG/JPEG) into a single PDF document.
+
+**Endpoint:** `POST /pdf/images-to-pdf`
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body:**
+| Field | Type | Required | Max Count | Max Size | Description |
+|-------|------|----------|-----------|----------|-------------|
+| `images` | File[] | Yes | 20 | 10MB each | Array of image files (PNG or JPEG) |
+
+**Response:**
+- **Content-Type:** `application/pdf`
+- **File:** Single PDF document with each image as a separate page
+
+**Success Status:** `200 OK`
+
+**Error Responses:**
+- `400 Bad Request` - No images uploaded, invalid format, or validation error
+- `413 Payload Too Large` - File exceeds 10MB or too many files
+- `500 Internal Server Error` - PDF creation failed
+
+---
+
+#### Frontend Integration Examples
+
+**React with Axios:**
+```javascript
+import axios from 'axios';
+
+const convertImagesToPdf = async (imageFiles) => {
+  const formData = new FormData();
+  
+  // Append all images to the form data
+  imageFiles.forEach((file) => {
+    formData.append('images', file);
+  });
+
+  try {
+    const response = await axios.post(
+      'http://localhost:3000/api/pdf/images-to-pdf',
+      formData,
+      {
+        responseType: 'blob', // Important for binary data
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          console.log(`Upload Progress: ${percentCompleted}%`);
+        },
+      }
+    );
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'converted.pdf');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+    return response.data;
+  } catch (error) {
+    console.error('Conversion failed:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Usage with multiple file input
+const handleFileUpload = async (event) => {
+  const files = Array.from(event.target.files);
+  if (files.length > 0) {
+    await convertImagesToPdf(files);
+  }
+};
+```
+
+**Vanilla JavaScript with Fetch:**
+```javascript
+async function convertImagesToPdf(imageFiles) {
+  const formData = new FormData();
+  
+  // Append all images (order is preserved)
+  imageFiles.forEach((file) => {
+    formData.append('images', file);
+  });
+
+  try {
+    const response = await fetch(
+      'http://localhost:3000/api/pdf/images-to-pdf',
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Conversion failed');
+    }
+
+    // Get the PDF file as blob
+    const blob = await response.blob();
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'converted.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+    
+    return blob;
+  } catch (error) {
+    console.error('Error:', error.message);
+    throw error;
+  }
+}
+
+// Usage with file input (multiple)
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  if (files.length > 0) {
+    await convertImagesToPdf(files);
+  }
+});
+```
+
+**Vue.js 3 (Composition API) with Drag & Drop and Reordering:**
+```javascript
+import { ref } from 'vue';
+
+export default {
+  setup() {
+    const images = ref([]);
+    const isConverting = ref(false);
+    const error = ref(null);
+
+    // Handle file selection
+    const handleFileSelect = (event) => {
+      const files = Array.from(event.target.files);
+      images.value = files.map((file, index) => ({
+        id: Date.now() + index,
+        file,
+        preview: URL.createObjectURL(file),
+      }));
+    };
+
+    // Reorder images (for drag & drop)
+    const reorderImages = (fromIndex, toIndex) => {
+      const item = images.value.splice(fromIndex, 1)[0];
+      images.value.splice(toIndex, 0, item);
+    };
+
+    // Remove image
+    const removeImage = (index) => {
+      URL.revokeObjectURL(images.value[index].preview);
+      images.value.splice(index, 1);
+    };
+
+    // Convert to PDF
+    const convertToPdf = async () => {
+      if (images.value.length === 0) {
+        error.value = 'Please select at least one image';
+        return;
+      }
+
+      isConverting.value = true;
+      error.value = null;
+
+      const formData = new FormData();
+      images.value.forEach((img) => {
+        formData.append('images', img.file);
+      });
+
+      try {
+        const response = await fetch(
+          'http://localhost:3000/api/pdf/images-to-pdf',
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message);
+        }
+
+        const blob = await response.blob();
+        
+        // Download file
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'converted.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        
+      } catch (err) {
+        error.value = err.message;
+        console.error('Conversion error:', err);
+      } finally {
+        isConverting.value = false;
+      }
+    };
+
+    return { 
+      images, 
+      isConverting, 
+      error,
+      handleFileSelect,
+      reorderImages,
+      removeImage,
+      convertToPdf,
+    };
+  }
+};
+```
+
+**React Component with Drag & Drop Reordering:**
+```javascript
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const ImagesToPdfConverter = () => {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    
+    // Validate files
+    const validFiles = files.filter(file => {
+      if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        setError('Only PNG and JPEG images are allowed');
+        return false;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Each file must be less than 10MB');
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length > 20) {
+      setError('Maximum 20 images allowed');
+      return;
+    }
+
+    setImages(validFiles.map((file, idx) => ({
+      id: Date.now() + idx,
+      file,
+      preview: URL.createObjectURL(file),
+    })));
+    setError(null);
+  };
+
+  const removeImage = (id) => {
+    setImages(prev => {
+      const filtered = prev.filter(img => img.id !== id);
+      const removed = prev.find(img => img.id === id);
+      if (removed) URL.revokeObjectURL(removed.preview);
+      return filtered;
+    });
+  };
+
+  const moveImage = (fromIndex, toIndex) => {
+    setImages(prev => {
+      const newImages = [...prev];
+      const [moved] = newImages.splice(fromIndex, 1);
+      newImages.splice(toIndex, 0, moved);
+      return newImages;
+    });
+  };
+
+  const handleConvert = async () => {
+    if (images.length === 0) {
+      setError('Please select at least one image');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    images.forEach(img => formData.append('images', img.file));
+
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/api/pdf/images-to-pdf',
+        formData,
+        { responseType: 'blob' }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'converted.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+    } catch (err) {
+      setError(err.response?.data?.message || 'Conversion failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Convert Images to PDF</h2>
+      
+      <input
+        type="file"
+        accept="image/png,image/jpeg"
+        multiple
+        onChange={handleFileChange}
+        disabled={loading}
+      />
+
+      {error && <div className="error">{error}</div>}
+
+      {images.length > 0 && (
+        <div>
+          <p>{images.length} image(s) selected. Drag to reorder:</p>
+          <div className="image-list">
+            {images.map((img, idx) => (
+              <div key={img.id} className="image-item">
+                <span>Page {idx + 1}</span>
+                <img src={img.preview} alt={`Preview ${idx + 1}`} />
+                <button onClick={() => removeImage(img.id)}>Remove</button>
+                {idx > 0 && (
+                  <button onClick={() => moveImage(idx, idx - 1)}>↑</button>
+                )}
+                {idx < images.length - 1 && (
+                  <button onClick={() => moveImage(idx, idx + 1)}>↓</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={handleConvert}
+        disabled={images.length === 0 || loading}
+      >
+        {loading ? 'Converting...' : 'Convert to PDF'}
+      </button>
+    </div>
+  );
+};
+
+export default ImagesToPdfConverter;
+```
+
+**cURL (Command Line):**
+```bash
+# Convert multiple images to PDF
+curl -X POST "http://localhost:3000/api/pdf/images-to-pdf" \
+  -F "images=@image1.png" \
+  -F "images=@image2.jpg" \
+  -F "images=@image3.png" \
+  -o converted.pdf
+
+# Note: Images are processed in the order they appear in the command
+```
+
+---
+
+### 5. Extract Text and Images
 
 Extract text content and embedded images from a PDF document.
 
