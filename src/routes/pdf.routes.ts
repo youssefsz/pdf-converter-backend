@@ -9,6 +9,7 @@ import archiver from 'archiver';
 import { upload, imageUpload, getUploadErrorMessage } from '../config/upload';
 import { pdfConverterService, PDFConverterService, ImageFormat } from '../services/pdfConverter.service';
 import { imageToPdfService, ImageToPdfService } from '../services/imageToPdf.service';
+import { pdfToDocxService, PdfToDocxService } from '../services/pdfToDocx.service';
 import { asyncHandler } from '../utils/asyncHandler';
 
 export const pdfRouter: Router = Router();
@@ -240,6 +241,68 @@ pdfRouter.post(
 );
 
 /**
+ * POST /pdf-to-docx
+ * 
+ * Convert a PDF file to DOCX (Microsoft Word) format.
+ * Extracts text and images from the PDF and reconstructs them in a Word document.
+ * 
+ * Request Body (multipart/form-data):
+ *   - pdf: PDF file to convert
+ * 
+ * Query Parameters (optional):
+ *   - includeImages: Include images in DOCX (default: true)
+ *   - preservePageBreaks: Add page breaks between PDF pages (default: true)
+ * 
+ * Response:
+ *   - DOCX file for download
+ */
+pdfRouter.post(
+  '/pdf-to-docx',
+  upload.single('pdf'),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    // Check if file was uploaded
+    if (!req.file) {
+      res.status(400).json({
+        status: 'error',
+        message: 'No PDF file uploaded. Please provide a PDF file in the "pdf" field.',
+      });
+      return;
+    }
+
+    try {
+      // Parse query parameters
+      const includeImages = req.query.includeImages !== 'false'; // Default true
+      const preservePageBreaks = req.query.preservePageBreaks !== 'false'; // Default true
+
+      // Validate options
+      const options = { includeImages, preservePageBreaks };
+      PdfToDocxService.validateOptions(options);
+
+      // Convert PDF to DOCX
+      const docxBuffer = await pdfToDocxService.convertPdfToDocx(
+        req.file.buffer,
+        options
+      );
+
+      // Set response headers for DOCX download
+      const originalFilename = req.file.originalname.replace(/\.pdf$/i, '');
+      const docxFilename = `${originalFilename}.docx`;
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', `attachment; filename="${docxFilename}"`);
+      res.setHeader('Content-Length', docxBuffer.length);
+
+      // Send the DOCX buffer
+      res.send(docxBuffer);
+
+    } catch (error) {
+      // Pass error to error handler
+      next(error);
+    }
+  })
+);
+
+/**
  * Error handler for multer errors
  * This middleware catches file upload errors
  */
@@ -272,10 +335,12 @@ pdfRouter.get('/health', (_req: Request, res: Response) => {
       convert: 'POST /convert - Convert PDF pages to images (png/jpeg)',
       extract: 'POST /extract - Extract text and images from PDF',
       imagesToPdf: 'POST /images-to-pdf - Convert multiple images to a single PDF',
+      pdfToDocx: 'POST /pdf-to-docx - Convert PDF to DOCX (Microsoft Word)',
     },
     supportedFormats: {
       pdfToImages: ['png', 'jpeg'],
       imagesToPdf: ['png', 'jpeg'],
+      pdfToDocx: ['docx'],
     },
     maxFileSize: '10MB',
     maxImagesPerRequest: 20,

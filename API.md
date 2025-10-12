@@ -656,7 +656,193 @@ curl -X POST "http://localhost:3000/api/pdf/images-to-pdf" \
 
 ---
 
-### 5. Extract Text and Images
+### 5. Convert PDF to DOCX
+
+Convert a PDF document to DOCX (Microsoft Word) format. Extracts text and images from the PDF and reconstructs them in a Word document.
+
+**Endpoint:** `POST /pdf/pdf-to-docx`
+
+**Content-Type:** `multipart/form-data`
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `includeImages` | boolean | No | `true` | Include images from PDF in DOCX |
+| `preservePageBreaks` | boolean | No | `true` | Add page breaks between PDF pages |
+
+**Request Body:**
+| Field | Type | Required | Max Size | Description |
+|-------|------|----------|----------|-------------|
+| `pdf` | File | Yes | 10MB | PDF file to convert |
+
+**Response:**
+- **Content-Type:** `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+- **File:** DOCX file with extracted content
+
+**Success Status:** `200 OK`
+
+**Error Responses:**
+- `400 Bad Request` - No PDF uploaded or invalid file
+- `413 Payload Too Large` - File exceeds 10MB
+- `500 Internal Server Error` - Conversion failed
+
+**Limitations:**
+- Complex layouts may be simplified
+- Tables are extracted as text (not structured tables)
+- Font styles may not be preserved exactly
+- Best suited for text-focused documents with basic formatting
+
+---
+
+#### Frontend Integration Examples
+
+**React with Axios:**
+```javascript
+import axios from 'axios';
+
+const convertPdfToDocx = async (pdfFile, options = {}) => {
+  const formData = new FormData();
+  formData.append('pdf', pdfFile);
+
+  const { includeImages = true, preservePageBreaks = true } = options;
+
+  try {
+    const response = await axios.post(
+      'http://localhost:3000/api/pdf/pdf-to-docx',
+      formData,
+      {
+        params: {
+          includeImages,
+          preservePageBreaks,
+        },
+        responseType: 'blob',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          console.log(`Upload Progress: ${percentCompleted}%`);
+        },
+      }
+    );
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    const filename = pdfFile.name.replace(/\.pdf$/i, '.docx');
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+    return response.data;
+  } catch (error) {
+    console.error('Conversion failed:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Usage
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (file && file.type === 'application/pdf') {
+    await convertPdfToDocx(file, {
+      includeImages: true,
+      preservePageBreaks: true,
+    });
+  }
+};
+```
+
+**Vanilla JavaScript with Fetch:**
+```javascript
+async function convertPdfToDocx(pdfFile, options = {}) {
+  const formData = new FormData();
+  formData.append('pdf', pdfFile);
+
+  const { includeImages = true, preservePageBreaks = true } = options;
+  const queryParams = new URLSearchParams({
+    includeImages: includeImages.toString(),
+    preservePageBreaks: preservePageBreaks.toString(),
+  });
+
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/pdf/pdf-to-docx?${queryParams}`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Conversion failed');
+    }
+
+    // Get the DOCX file as blob
+    const blob = await response.blob();
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const filename = pdfFile.name.replace(/\.pdf$/i, '.docx');
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+    
+    return blob;
+  } catch (error) {
+    console.error('Error:', error.message);
+    throw error;
+  }
+}
+
+// Usage with file input
+document.getElementById('pdfInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    await convertPdfToDocx(file, {
+      includeImages: true,
+      preservePageBreaks: false, // Single document without page breaks
+    });
+  }
+});
+```
+
+**cURL Examples:**
+```bash
+# Basic conversion (with all defaults)
+curl -X POST http://localhost:3000/api/pdf/pdf-to-docx \
+  -F "pdf=@document.pdf" \
+  -o document.docx
+
+# Without images
+curl -X POST "http://localhost:3000/api/pdf/pdf-to-docx?includeImages=false" \
+  -F "pdf=@document.pdf" \
+  -o document.docx
+
+# Without page breaks (continuous document)
+curl -X POST "http://localhost:3000/api/pdf/pdf-to-docx?preservePageBreaks=false" \
+  -F "pdf=@document.pdf" \
+  -o document.docx
+
+# Custom options
+curl -X POST "http://localhost:3000/api/pdf/pdf-to-docx?includeImages=true&preservePageBreaks=true" \
+  -F "pdf=@document.pdf" \
+  -o document.docx
+```
+
+---
+
+### 6. Extract Text and Images
 
 Extract text content and embedded images from a PDF document.
 

@@ -438,12 +438,15 @@
 <body>
     <div class="container">
         <h1>PDF Processing Service</h1>
-        <p class="subtitle">Convert PDFs to images, convert images to PDF, or extract content</p>
+        <p class="subtitle">Convert PDFs to images, DOCX, or extract content • Convert images to PDF</p>
         
         <!-- Tab Navigation -->
         <div class="tabs" style="display: flex; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0;">
             <button class="tab-btn active" data-tab="convert" style="flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid #000; cursor: pointer; font-weight: 600; color: #000; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
                 PDF to Images
+            </button>
+            <button class="tab-btn" data-tab="pdfToDocx" style="flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 500; color: #999; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                PDF to DOCX
             </button>
             <button class="tab-btn" data-tab="imagesToPdf" style="flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 500; color: #999; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
                 Images to PDF
@@ -521,6 +524,68 @@
         </div>
         </div>
         <!-- End Convert Tab -->
+
+        <!-- PDF to DOCX Tab Content -->
+        <div class="tab-content" id="pdfToDocxTab" style="display: none;">
+        <div class="upload-area" id="uploadAreaDocx">
+            <div class="upload-icon">UPLOAD FILE</div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="upload-hint">PDF files only (max 10MB)</div>
+            <input type="file" id="fileInputDocx" accept="application/pdf" style="display: none;">
+        </div>
+
+        <div class="file-info" id="fileInfoDocx">
+            <div style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Selected file:</div>
+            <div class="file-name" id="fileNameDocx"></div>
+        </div>
+
+        <div class="format-selection">
+            <label>Conversion Options:</label>
+            <div style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; padding: 12px; background: #fafafa; border: 1px solid #e0e0e0; cursor: pointer; font-size: 14px; text-transform: none; margin-bottom: 0;">
+                    <input type="checkbox" id="includeImages" checked style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <span>Include images in DOCX</span>
+                </label>
+            </div>
+            <div>
+                <label style="display: flex; align-items: center; padding: 12px; background: #fafafa; border: 1px solid #e0e0e0; cursor: pointer; font-size: 14px; text-transform: none; margin-bottom: 0;">
+                    <input type="checkbox" id="preservePageBreaks" checked style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <span>Preserve page breaks</span>
+                </label>
+            </div>
+        </div>
+
+        <button class="convert-btn" id="convertDocxBtn" disabled>Select a PDF file first</button>
+
+        <div class="progress" id="progressDocx">
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="progress-text">Converting PDF to DOCX...</div>
+        </div>
+
+        <div class="result" id="resultDocx">
+            <div class="result-icon" id="resultIconDocx"></div>
+            <div class="result-text" id="resultTextDocx"></div>
+            <div class="result-message" id="resultMessageDocx"></div>
+            <button class="download-btn" id="downloadBtnDocx" style="display: none;">Download DOCX File</button>
+            <button class="reset-btn" id="resetBtnDocx">Upload Another PDF</button>
+        </div>
+
+        <div class="info-box">
+            <h3>Information</h3>
+            <ul>
+                <li>Maximum file size: 10MB</li>
+                <li>Converts PDF to Microsoft Word format (DOCX)</li>
+                <li>Extracts and preserves text content with proper formatting</li>
+                <li>Optionally includes embedded images</li>
+                <li>Best suited for text-focused documents</li>
+                <li>Complex layouts may be simplified</li>
+                <li>Tables are extracted as text (not structured tables)</li>
+            </ul>
+        </div>
+        </div>
+        <!-- End PDF to DOCX Tab -->
 
         <!-- Images to PDF Tab Content -->
         <div class="tab-content" id="imagesToPdfTab" style="display: none;">
@@ -970,6 +1035,181 @@
             resultTextExtract.textContent = 'Extraction Failed';
             resultMessageExtract.textContent = message;
             downloadBtnExtract.style.display = 'none';
+        }
+
+        // =============== PDF TO DOCX TAB HANDLERS ===============
+        
+        const uploadAreaDocx = document.getElementById('uploadAreaDocx');
+        const fileInputDocx = document.getElementById('fileInputDocx');
+        const fileInfoDocx = document.getElementById('fileInfoDocx');
+        const fileNameDocx = document.getElementById('fileNameDocx');
+        const convertDocxBtn = document.getElementById('convertDocxBtn');
+        const progressDocx = document.getElementById('progressDocx');
+        const resultDocx = document.getElementById('resultDocx');
+        const resultIconDocx = document.getElementById('resultIconDocx');
+        const resultTextDocx = document.getElementById('resultTextDocx');
+        const resultMessageDocx = document.getElementById('resultMessageDocx');
+        const downloadBtnDocx = document.getElementById('downloadBtnDocx');
+        const resetBtnDocx = document.getElementById('resetBtnDocx');
+        const includeImagesCheckbox = document.getElementById('includeImages');
+        const preservePageBreaksCheckbox = document.getElementById('preservePageBreaks');
+
+        let selectedFileDocx = null;
+        let downloadBlobDocx = null;
+
+        // Click to upload for DOCX
+        uploadAreaDocx.addEventListener('click', () => {
+            fileInputDocx.click();
+        });
+
+        // File selection for DOCX
+        fileInputDocx.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileDocx(file);
+            }
+        });
+
+        // Drag and drop for DOCX
+        uploadAreaDocx.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadAreaDocx.classList.add('dragover');
+        });
+
+        uploadAreaDocx.addEventListener('dragleave', () => {
+            uploadAreaDocx.classList.remove('dragover');
+        });
+
+        uploadAreaDocx.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadAreaDocx.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'application/pdf') {
+                handleFileDocx(file);
+            } else {
+                alert('Please drop a PDF file');
+            }
+        });
+
+        // Handle file selection for DOCX
+        function handleFileDocx(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit');
+                return;
+            }
+
+            selectedFileDocx = file;
+            fileNameDocx.textContent = file.name;
+            fileInfoDocx.classList.add('show');
+            convertDocxBtn.disabled = false;
+            convertDocxBtn.textContent = 'Convert to DOCX';
+            resultDocx.classList.remove('show');
+        }
+
+        // Convert to DOCX button click
+        convertDocxBtn.addEventListener('click', async () => {
+            if (!selectedFileDocx) return;
+
+            const apiUrl = serverUrl.value.trim();
+            const includeImages = includeImagesCheckbox.checked;
+            const preservePageBreaks = preservePageBreaksCheckbox.checked;
+
+            // Validate server URL
+            if (!apiUrl) {
+                showErrorDocx('Please enter a server URL');
+                return;
+            }
+
+            // Show progress
+            convertDocxBtn.disabled = true;
+            progressDocx.classList.add('show');
+            resultDocx.classList.remove('show');
+
+            try {
+                // Create form data
+                const formData = new FormData();
+                formData.append('pdf', selectedFileDocx);
+
+                // Build query parameters
+                const queryParams = new URLSearchParams({
+                    includeImages: includeImages.toString(),
+                    preservePageBreaks: preservePageBreaks.toString()
+                });
+
+                // Make API request
+                const response = await fetch(`${apiUrl}/api/pdf/pdf-to-docx?${queryParams}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.message || `Server error: ${response.status}`);
+                }
+
+                // Get the DOCX blob
+                downloadBlobDocx = await response.blob();
+
+                // Show success
+                showSuccessDocx(selectedFileDocx.name);
+
+            } catch (error) {
+                console.error('Conversion error:', error);
+                showErrorDocx(error.message || 'Failed to convert PDF to DOCX. Please check your server connection.');
+            } finally {
+                progressDocx.classList.remove('show');
+                convertDocxBtn.disabled = false;
+            }
+        });
+
+        // Download button click for DOCX
+        downloadBtnDocx.addEventListener('click', () => {
+            if (downloadBlobDocx) {
+                const url = URL.createObjectURL(downloadBlobDocx);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = selectedFileDocx.name.replace('.pdf', '.docx');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Reset button click for DOCX
+        resetBtnDocx.addEventListener('click', () => {
+            selectedFileDocx = null;
+            downloadBlobDocx = null;
+            fileInputDocx.value = '';
+            fileInfoDocx.classList.remove('show');
+            resultDocx.classList.remove('show');
+            convertDocxBtn.disabled = true;
+            convertDocxBtn.textContent = 'Select a PDF file first';
+            uploadAreaDocx.querySelector('.upload-icon').textContent = 'UPLOAD FILE';
+        });
+
+        // Show success message for DOCX
+        function showSuccessDocx(originalName) {
+            resultDocx.className = 'result show success';
+            resultIconDocx.textContent = 'SUCCESS';
+            resultTextDocx.textContent = 'Conversion Successful';
+            resultMessageDocx.textContent = 'Your PDF has been converted to DOCX format. Click below to download the Word document.';
+            downloadBtnDocx.style.display = 'block';
+        }
+
+        // Show error message for DOCX
+        function showErrorDocx(message) {
+            resultDocx.className = 'result show error';
+            resultIconDocx.textContent = 'ERROR';
+            resultTextDocx.textContent = 'Conversion Failed';
+            resultMessageDocx.textContent = message;
+            downloadBtnDocx.style.display = 'none';
         }
 
         // =============== IMAGES TO PDF TAB HANDLERS ===============

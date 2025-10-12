@@ -1,6 +1,6 @@
 # PDF Converter API
 
-A production-ready Express.js PDF conversion API built with TypeScript. Convert PDFs to images or extract text and images from PDF documents.
+A production-ready Express.js PDF conversion API built with TypeScript. Convert PDFs to images, DOCX (Word), or extract text and images from PDF documents.
 
 ## 🛠️ Tech Stack
 
@@ -15,6 +15,7 @@ A production-ready Express.js PDF conversion API built with TypeScript. Convert 
 **PDF Processing:**
 - `pdfjs-dist` (5.4.296) - Mozilla's PDF parsing and rendering library
 - `pdf-lib` (1.17.1) - PDF creation and modification library
+- `docx` (9.5.1) - Create and manipulate DOCX files
 - `@napi-rs/canvas` (0.1.80) - High-performance canvas implementation for Node.js
 
 **File Handling:**
@@ -128,7 +129,9 @@ pdf-converter/
 │   │   └── pdf.routes.ts        # PDF conversion endpoints
 │   │
 │   ├── services/                  # Business logic layer
-│   │   └── pdfConverter.service.ts  # PDF processing service
+│   │   ├── pdfConverter.service.ts  # PDF processing service
+│   │   ├── imageToPdf.service.ts    # Images to PDF conversion
+│   │   └── pdfToDocx.service.ts     # PDF to DOCX conversion
 │   │
 │   ├── utils/                     # Utility functions
 │   │   └── asyncHandler.ts      # Async error wrapper
@@ -160,6 +163,14 @@ pdf-converter/
 - Support for PNG and JPEG formats
 - High resolution (2x scale factor)
 - Returns ZIP archive with all pages
+
+### PDF to DOCX
+- Convert PDF documents to Microsoft Word format (DOCX)
+- Extract and preserve text content with proper formatting
+- Include embedded images in the Word document
+- Optional page breaks between PDF pages
+- Pure Node.js implementation (no system dependencies)
+- Compatible with Render.com free tier
 
 ### Images to PDF
 - Convert multiple images into a single PDF document
