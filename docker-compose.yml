@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  pdf-converter:
+    build: .
+    container_name: pdf-converter
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    # Env file usually contains API keys or specific configs
+    env_file:
+      - .env
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      # Update the Host rule to your actual domain
+      - "traefik.http.routers.pdf-converter.rule=Host(`pdf.youssef.run.place`)" 
+      - "traefik.http.routers.pdf-converter.entrypoints=websecure"
+      - "traefik.http.routers.pdf-converter.tls.certresolver=myresolver"
+      - "traefik.http.services.pdf-converter.loadbalancer.server.port=3000"
+
+networks:
+  traefik:
+    external: true
