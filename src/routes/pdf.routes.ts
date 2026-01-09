@@ -12,6 +12,7 @@ import { imageToPdfService, ImageToPdfService } from '../services/imageToPdf.ser
 import { pdfToDocxService, PdfToDocxService } from '../services/pdfToDocx.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { validatePdfUpload, validateImageUploads } from '../middleware/fileValidation';
+import { pdfComplexityMiddleware } from '../middleware/dosProtection';
 
 export const pdfRouter: Router = Router();
 
@@ -33,6 +34,7 @@ pdfRouter.post(
   '/convert',
   upload.single('pdf'),
   validatePdfUpload,
+  pdfComplexityMiddleware(100), // Max 100 pages
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // Check if file was uploaded
     if (!req.file) {
@@ -117,6 +119,7 @@ pdfRouter.post(
   '/extract',
   upload.single('pdf'),
   validatePdfUpload,
+  pdfComplexityMiddleware(100), // Max 100 pages
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // Check if file was uploaded
     if (!req.file) {
@@ -264,6 +267,7 @@ pdfRouter.post(
   '/pdf-to-docx',
   upload.single('pdf'),
   validatePdfUpload,
+  pdfComplexityMiddleware(100), // Max 100 pages
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // Check if file was uploaded
     if (!req.file) {
