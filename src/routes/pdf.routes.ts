@@ -11,6 +11,7 @@ import { pdfConverterService, PDFConverterService, ImageFormat } from '../servic
 import { imageToPdfService, ImageToPdfService } from '../services/imageToPdf.service';
 import { pdfToDocxService, PdfToDocxService } from '../services/pdfToDocx.service';
 import { asyncHandler } from '../utils/asyncHandler';
+import { validatePdfUpload, validateImageUploads } from '../middleware/fileValidation';
 
 export const pdfRouter: Router = Router();
 
@@ -31,6 +32,7 @@ export const pdfRouter: Router = Router();
 pdfRouter.post(
   '/convert',
   upload.single('pdf'),
+  validatePdfUpload,
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // Check if file was uploaded
     if (!req.file) {
@@ -43,7 +45,7 @@ pdfRouter.post(
 
     // Get and validate format parameter
     const formatParam = (req.query.format as string)?.toLowerCase() || 'png';
-    
+
     if (!PDFConverterService.isValidFormat(formatParam)) {
       res.status(400).json({
         status: 'error',
@@ -64,7 +66,7 @@ pdfRouter.post(
       // Set response headers for ZIP download
       const originalFilename = req.file.originalname.replace(/\.pdf$/i, '');
       const zipFilename = `${originalFilename}_converted.zip`;
-      
+
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
 
@@ -114,6 +116,7 @@ pdfRouter.post(
 pdfRouter.post(
   '/extract',
   upload.single('pdf'),
+  validatePdfUpload,
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // Check if file was uploaded
     if (!req.file) {
@@ -133,7 +136,7 @@ pdfRouter.post(
       // Set response headers for ZIP download
       const originalFilename = req.file.originalname.replace(/\.pdf$/i, '');
       const zipFilename = `${originalFilename}_extracted.zip`;
-      
+
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
 
@@ -153,18 +156,18 @@ pdfRouter.post(
       // Add content for each page
       for (const page of extractedContent) {
         const pageNum = page.pageNumber;
-        
+
         // Add text file for the page
-        archive.append(page.textContent, { 
-          name: `page-${pageNum}.txt` 
+        archive.append(page.textContent, {
+          name: `page-${pageNum}.txt`
         });
 
         // Add images if any exist for this page
         if (page.images.length > 0) {
           for (const image of page.images) {
             // Add images to page-specific folder
-            archive.append(image.buffer, { 
-              name: `page-${pageNum}-images/${image.filename}` 
+            archive.append(image.buffer, {
+              name: `page-${pageNum}-images/${image.filename}`
             });
           }
         }
@@ -198,6 +201,7 @@ pdfRouter.post(
 pdfRouter.post(
   '/images-to-pdf',
   imageUpload.array('images', 20),
+  validateImageUploads,
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // Check if files were uploaded
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
@@ -225,7 +229,7 @@ pdfRouter.post(
       // Set response headers for PDF download
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
       const pdfFilename = `images-to-pdf-${timestamp}.pdf`;
-      
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${pdfFilename}"`);
       res.setHeader('Content-Length', pdfBuffer.length);
@@ -259,6 +263,7 @@ pdfRouter.post(
 pdfRouter.post(
   '/pdf-to-docx',
   upload.single('pdf'),
+  validatePdfUpload,
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     // Check if file was uploaded
     if (!req.file) {
@@ -287,7 +292,7 @@ pdfRouter.post(
       // Set response headers for DOCX download
       const originalFilename = req.file.originalname.replace(/\.pdf$/i, '');
       const docxFilename = `${originalFilename}.docx`;
-      
+
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       res.setHeader('Content-Disposition', `attachment; filename="${docxFilename}"`);
       res.setHeader('Content-Length', docxBuffer.length);
@@ -308,16 +313,16 @@ pdfRouter.post(
  */
 pdfRouter.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   // Check if it's a multer error
-  if (err.name === 'MulterError' || 
-      err.message === 'Only PDF files are allowed' ||
-      err.message === 'Only PNG and JPEG images are allowed') {
+  if (err.name === 'MulterError' ||
+    err.message === 'Only PDF files are allowed' ||
+    err.message === 'Only PNG and JPEG images are allowed') {
     res.status(400).json({
       status: 'error',
       message: getUploadErrorMessage(err),
     });
     return;
   }
-  
+
   // Pass to global error handler
   next(err);
 });
