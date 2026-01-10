@@ -13,10 +13,15 @@ services:
       - .env
     networks:
       - traefik
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
     labels:
       - "traefik.enable=true"
       # Update the Host rule to your actual domain
-      - "traefik.http.routers.pdf-converter.rule=Host(`pdf.youssef.run.place`)" 
+      - "traefik.http.routers.pdf-converter.rule=Host(`pdf.youssef.run.place`)"
       - "traefik.http.routers.pdf-converter.entrypoints=websecure"
       - "traefik.http.routers.pdf-converter.tls.certresolver=myresolver"
       - "traefik.http.services.pdf-converter.loadbalancer.server.port=3000"
