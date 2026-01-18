@@ -1,30 +1,62 @@
-version: '3'
+version: '3.8'
+
+x-service-template: &service-template
+  build: .
+  # Use node to perform a quick health check
+  healthcheck:
+    test: [ "CMD-SHELL", "node -e \"fetch('http://localhost:3000/').then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))\"" ]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+  restart: unless-stopped
+  env_file:
+    - .env
+  environment:
+    - NODE_ENV=production
+    - PORT=3000
+    # Identifying the instance for logs
+    - INSTANCE_ID={{.Name}}
+  networks:
+    - traefik
+  deploy:
+    resources:
+      limits:
+        cpus: '0.25'
+        memory: 256M
 
 services:
-  pdf-converter:
-    build: .
-    container_name: pdf-converter
-    restart: always
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-    # Env file usually contains API keys or specific configs
-    env_file:
-      - .env
-    networks:
-      - traefik
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: 256M
+  # ============================================
+  # Blue Instance
+  # ============================================
+  blue:
+    <<: *service-template
+    container_name: pdf-converter-blue
     labels:
       - "traefik.enable=true"
-      # Update the Host rule to your actual domain
-      - "traefik.http.routers.pdf-converter.rule=Host(`pdf.youssef.run.place`)"
-      - "traefik.http.routers.pdf-converter.entrypoints=websecure"
-      - "traefik.http.routers.pdf-converter.tls.certresolver=myresolver"
-      - "traefik.http.services.pdf-converter.loadbalancer.server.port=3000"
+      # Router - Distinct name but SAME Host rule
+      - "traefik.http.routers.pdf-converter-blue.rule=Host(`pdf.youssef.run.place`)"
+      - "traefik.http.routers.pdf-converter-blue.entrypoints=websecure"
+      - "traefik.http.routers.pdf-converter-blue.tls.certresolver=myresolver"
+      - "traefik.http.routers.pdf-converter-blue.middlewares=default-chain@file"
+      # Service
+      - "traefik.http.services.pdf-converter-blue.loadbalancer.server.port=3000"
+
+  # ============================================
+  # Green Instance
+  # ============================================
+  green:
+    <<: *service-template
+    container_name: pdf-converter-green
+    labels:
+      - "traefik.enable=true"
+      # Router - Distinct name but SAME Host rule
+      - "traefik.http.routers.pdf-converter-green.rule=Host(`pdf.youssef.run.place`)"
+      - "traefik.http.routers.pdf-converter-green.entrypoints=websecure"
+      - "traefik.http.routers.pdf-converter-green.tls.certresolver=myresolver"
+      - "traefik.http.routers.pdf-converter-green.middlewares=default-chain@file"
+      # Service
+      - "traefik.http.services.pdf-converter-green.loadbalancer.server.port=3000"
 
 networks:
   traefik:
