@@ -4,6 +4,7 @@
  * Configures security-related middleware including helmet, CORS, and rate limiting.
  */
 
+import { Request } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -41,7 +42,9 @@ export const rateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting in test environment
-  skip: () => env.NODE_ENV === 'test',
+  // Skip rate limiting in test environment OR for internal health checks
+  skip: (req: Request) => {
+    return env.NODE_ENV === 'test' || req.ip === '127.0.0.1' || req.ip === '::1';
+  },
 });
 

@@ -121,7 +121,11 @@ export const concurrentRequestLimiter = (
         concurrentRequests.set(clientIp, currentCount + 1);
 
         // Decrement counter when request finishes
+        let cleanedUp = false;
         const cleanup = () => {
+            if (cleanedUp) return;
+            cleanedUp = true;
+
             const count = concurrentRequests.get(clientIp) || 0;
             if (count <= 1) {
                 concurrentRequests.delete(clientIp);
