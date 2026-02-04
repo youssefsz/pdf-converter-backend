@@ -35,7 +35,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Router - Distinct name but SAME Host rule
-      - "traefik.http.routers.pdf-converter-blue.rule=Host(`pdf.youssef.run.place`)"
+      - "traefik.http.routers.pdf-converter-blue.rule=Host(`pdf.youssef.run.place`) || Host(`pdf.dhibi.tn`)"
       - "traefik.http.routers.pdf-converter-blue.entrypoints=websecure"
       - "traefik.http.routers.pdf-converter-blue.tls.certresolver=myresolver"
       - "traefik.http.routers.pdf-converter-blue.middlewares=default-chain@file"
@@ -51,7 +51,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Router - Distinct name but SAME Host rule
-      - "traefik.http.routers.pdf-converter-green.rule=Host(`pdf.youssef.run.place`)"
+      - "traefik.http.routers.pdf-converter-green.rule=Host(`pdf.youssef.run.place`) || Host(`pdf.dhibi.tn`)"
       - "traefik.http.routers.pdf-converter-green.entrypoints=websecure"
       - "traefik.http.routers.pdf-converter-green.tls.certresolver=myresolver"
       - "traefik.http.routers.pdf-converter-green.middlewares=default-chain@file"
