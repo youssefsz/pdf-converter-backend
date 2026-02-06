@@ -136,6 +136,48 @@ export class FileValidator {
     }
 
     /**
+     * Validate a text file
+     * 
+     * @param buffer - File buffer
+     * @param filename - Original filename
+     * @param mimeType - Claimed MIME type
+     * @returns Validation result
+     */
+    static validateText(
+        buffer: Buffer,
+        filename: string,
+        mimeType: string
+    ): ValidationResult {
+        const errors: string[] = [];
+
+        // 1. Check MIME type
+        if (mimeType !== 'text/plain') {
+            errors.push(`Invalid MIME type: ${mimeType}. Expected: text/plain`);
+        }
+
+        // 2. Check extension
+        const extension = this.getExtension(filename);
+        if (extension !== '.txt') {
+            errors.push(`Invalid file extension: ${extension}. Expected: .txt`);
+        }
+
+        // 3. Content check (Basic heuristic: check for null bytes)
+        const checkLimit = Math.min(buffer.length, 1000);
+        for (let i = 0; i < checkLimit; i++) {
+            if (buffer[i] === 0) {
+                errors.push('File appears to be binary (contains null bytes)');
+                break;
+            }
+        }
+
+        return {
+            isValid: errors.length === 0,
+            detectedType: errors.length === 0 ? 'text/plain' : null,
+            errors,
+        };
+    }
+
+    /**
      * Validate a PDF file
      * 
      * @param buffer - File buffer

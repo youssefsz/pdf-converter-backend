@@ -132,6 +132,53 @@ export const validateImageUploads = (
 };
 
 /**
+ * Middleware to validate a single Text file upload
+ * 
+ * Use after multer's textUpload.single() middleware.
+ * Validates that the uploaded file is a valid text file.
+ */
+export const validateTextUpload = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): void => {
+    // Skip if no file uploaded (let route handler deal with it)
+    if (!req.file) {
+        next();
+        return;
+    }
+
+    const { buffer, originalname, mimetype } = req.file;
+
+    const result = FileValidator.validateText(buffer, originalname, mimetype);
+
+    if (!result.isValid) {
+        const errorMessage = FileValidator.formatValidationError(result);
+
+        // Log security-relevant information
+        console.warn('[SECURITY] Text file validation failed:', {
+            filename: originalname,
+            mimetype,
+            detectedType: result.detectedType,
+            fileSize: buffer.length,
+            errors: result.errors,
+            ip: req.ip,
+            timestamp: new Date().toISOString(),
+        });
+
+        res.status(400).json({
+            status: 'error',
+            message: 'Invalid text file',
+            details: errorMessage,
+        });
+        return;
+    }
+
+    // File is valid, proceed
+    next();
+};
+
+/**
  * Factory function to create custom file validation middleware
  * 
  * @param allowedTypes - Array of allowed file type keys (e.g., ['pdf', 'png'])

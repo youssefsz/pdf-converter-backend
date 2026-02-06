@@ -1045,6 +1045,32 @@ async function handlePdfOperation(file) {
 
 ---
 
+### 7. Convert Text to PDF
+
+Convert a plain text file (`.txt`) to a PDF document.
+
+**Endpoint:** `POST /pdf/text-to-pdf`
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body:**
+| Field | Type | Required | Max Size | Description |
+|-------|------|----------|----------|-------------|
+| `text` | File | Yes | 10MB | Text file (`.txt`) to convert |
+
+**Response:**
+- **Content-Type:** `application/pdf`
+- **File:** Binary PDF file
+
+**Success Status:** `200 OK`
+
+**Error Responses:**
+- `400 Bad Request` - No file uploaded, invalid format (must be .txt)
+- `413 Payload Too Large` - File exceeds 10MB
+- `500 Internal Server Error` - PDF creation failed
+
+---
+
 ## 📊 Rate Limiting
 
 - **Limit:** 100 requests per 15 minutes per IP address

@@ -52,6 +52,22 @@ const imageFileFilter = (
 };
 
 /**
+ * File filter to accept only text files
+ */
+const textFileFilter = (
+  _req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+): void => {
+  // Accept only text files
+  if (file.mimetype === 'text/plain') {
+    cb(null, true);
+  } else {
+    cb(new Error('Only text files (.txt) are allowed'));
+  }
+};
+
+/**
  * Multer upload configuration for PDF files
  */
 export const upload = multer({
@@ -71,6 +87,17 @@ export const imageUpload = multer({
   limits: {
     fileSize: MAX_FILE_SIZE,
     files: 20, // Maximum 20 images per request
+  },
+});
+
+/**
+ * Multer upload configuration for text files
+ */
+export const textUpload = multer({
+  storage,
+  fileFilter: textFileFilter,
+  limits: {
+    fileSize: MAX_FILE_SIZE,
   },
 });
 
@@ -96,6 +123,10 @@ export const getUploadErrorMessage = (error: any): string => {
   }
   
   if (error.message === 'Only PNG and JPEG images are allowed') {
+    return error.message;
+  }
+
+  if (error.message === 'Only text files (.txt) are allowed') {
     return error.message;
   }
   

@@ -6,12 +6,13 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import archiver from 'archiver';
-import { upload, imageUpload, getUploadErrorMessage } from '../config/upload';
+import { upload, imageUpload, textUpload, getUploadErrorMessage } from '../config/upload';
 import { pdfConverterService, PDFConverterService, ImageFormat } from '../services/pdfConverter.service';
 import { imageToPdfService, ImageToPdfService } from '../services/imageToPdf.service';
 import { pdfToDocxService, PdfToDocxService } from '../services/pdfToDocx.service';
+import { textToPdfService } from '../services/textToPdf.service';
 import { asyncHandler } from '../utils/asyncHandler';
-import { validatePdfUpload, validateImageUploads } from '../middleware/fileValidation';
+import { validatePdfUpload, validateImageUploads, validateTextUpload } from '../middleware/fileValidation';
 import { pdfComplexityMiddleware } from '../middleware/dosProtection';
 
 export const pdfRouter: Router = Router();
@@ -312,6 +313,51 @@ pdfRouter.post(
 );
 
 /**
+ * POST /text-to-pdf
+ * 
+ * Convert a Text file to PDF.
+ * 
+ * Request Body (multipart/form-data):
+ *   - text: Text file to convert
+ * 
+ * Response:
+ *   - PDF file
+ */
+pdfRouter.post(
+  '/text-to-pdf',
+  textUpload.single('text'),
+  validateTextUpload,
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    // Check if file was uploaded
+    if (!req.file) {
+      res.status(400).json({
+        status: 'error',
+        message: 'No text file uploaded. Please provide a .txt file in the "text" field.',
+      });
+      return;
+    }
+
+    try {
+      const pdfBuffer = await textToPdfService.convertTextToPdf(
+        req.file.buffer.toString('utf-8')
+      );
+
+      const originalFilename = req.file.originalname.replace(/\.txt$/i, '');
+      const pdfFilename = `${originalFilename}.pdf`;
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${pdfFilename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      next(error);
+    }
+  })
+);
+
+/**
  * Error handler for multer errors
  * This middleware catches file upload errors
  */
@@ -319,7 +365,8 @@ pdfRouter.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   // Check if it's a multer error
   if (err.name === 'MulterError' ||
     err.message === 'Only PDF files are allowed' ||
-    err.message === 'Only PNG and JPEG images are allowed') {
+    err.message === 'Only PNG and JPEG images are allowed' ||
+    err.message === 'Only text files (.txt) are allowed') {
     res.status(400).json({
       status: 'error',
       message: getUploadErrorMessage(err),
@@ -345,11 +392,13 @@ pdfRouter.get('/health', (_req: Request, res: Response) => {
       extract: 'POST /extract - Extract text and images from PDF',
       imagesToPdf: 'POST /images-to-pdf - Convert multiple images to a single PDF',
       pdfToDocx: 'POST /pdf-to-docx - Convert PDF to DOCX (Microsoft Word)',
+      textToPdf: 'POST /text-to-pdf - Convert text file to PDF',
     },
     supportedFormats: {
       pdfToImages: ['png', 'jpeg'],
       imagesToPdf: ['png', 'jpeg'],
       pdfToDocx: ['docx'],
+      textToPdf: ['txt'],
     },
     maxFileSize: '10MB',
     maxImagesPerRequest: 20,

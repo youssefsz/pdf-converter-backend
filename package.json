@@ -35,9 +35,11 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
+    "mammoth": "^1.11.0",
     "multer": "^2.0.2",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^5.4.296"
+    "pdfjs-dist": "^5.4.296",
+    "puppeteer": "^24.37.1"
   },
   "devDependencies": {
     "@types/archiver": "^6.0.3",
